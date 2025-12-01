@@ -3,5 +3,14 @@
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('user');
+});
+
+Route::get('/mitra-login', function () {
+    return view('merchant.auth'); 
+});
+
+
+Route::get('/merchant/dashboard', function () {
+    return view('merchant.dashboard');
 });
