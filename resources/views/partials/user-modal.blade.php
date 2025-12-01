@@ -12,7 +12,7 @@
              class="relative bg-[#0F172A] md:rounded-[2rem] w-full max-w-lg shadow-2xl flex flex-col h-screen md:h-[85vh] overflow-hidden">
 
             <!-- ============================================ -->
-            <!-- VIEW 1: DETAIL TOKO & LIST MENU (Tampilan Awal) -->
+            <!-- VIEW 1: MERCHANT DETAIL (LIST MENU) -->
             <!-- ============================================ -->
             <div x-show="modalView === 'merchant_detail'" class="flex flex-col h-full relative w-full">
                 
@@ -59,7 +59,7 @@
                     </div>
                 </div>
 
-                <!-- FOOTER: FLOATING CART BAR (Muncul jika ada isi keranjang) -->
+                <!-- FOOTER: FLOATING CART BAR -->
                 <div x-show="cartCount > 0" 
                      x-transition:enter="transition ease-out duration-300"
                      x-transition:enter-start="translate-y-full opacity-0"
@@ -75,9 +75,7 @@
                 </div>
             </div>
 
-            <!-- ============================================ -->
-            <!-- VIEW 2: MENU CUSTOMIZATION (Detail Menu & Addon) -->
-            <!-- ============================================ -->
+            
             <div x-show="modalView === 'menu_customization'" class="flex flex-col h-full w-full" style="display: none;">
                 
                 <!-- HEADER (Fixed) -->
@@ -151,63 +149,8 @@
                 </div>
             </div>
 
-            <!-- ============================================ -->
-            <!-- VIEW 3: CART & CHECKOUT -->
-            <!-- ============================================ -->
-            <div x-show="modalView === 'cart_detail'" class="flex flex-col h-full w-full" style="display: none;">
-                
-                <!-- HEADER (Fixed) -->
-                <div class="px-6 py-4 border-b border-gray-700 bg-[#0F172A] flex items-center justify-between flex-shrink-0 z-10">
-                    <div class="flex items-center gap-3">
-                        <button @click="backToMerchant()" class="bg-gray-800 p-2 rounded-full hover:text-white text-gray-400 transition"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
-                        <h3 class="text-xl font-bold text-white">Keranjang Saya</h3>
-                    </div>
-                    <button @click="showModal = false" class="text-gray-400 hover:text-white bg-gray-800 p-2 rounded-full"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
-                </div>
-
-                <!-- BODY (Scrollable List Item) -->
-                <div class="flex-1 overflow-y-auto no-scrollbar p-6 bg-[#0F172A] space-y-4">
-                    <template x-if="cart.length === 0">
-                        <div class="flex flex-col items-center justify-center h-full text-gray-500">
-                            <svg class="w-16 h-16 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                            <p>Keranjang kosong</p>
-                        </div>
-                    </template>
-
-                    <template x-for="item in cart" :key="item.id">
-                        <div class="flex gap-4 p-4 rounded-xl bg-gray-800/30 border border-gray-700 items-start">
-                            <div class="w-16 h-16 rounded-lg bg-gray-900 overflow-hidden flex-shrink-0">
-                                <img :src="item.img" class="w-full h-full object-cover">
-                            </div>
-                            <div class="flex-1">
-                                <div class="flex justify-between items-start">
-                                    <h5 class="font-bold text-white text-sm" x-text="item.name"></h5>
-                                    <span class="text-brand-green font-bold text-sm" x-text="'Rp ' + formatRupiah(item.total)"></span>
-                                </div>
-                                <p class="text-gray-400 text-xs mt-1" x-text="item.qty + 'x ' + (item.note ? ' • Catatan: ' + item.note : '')"></p>
-                                <div class="flex flex-wrap gap-1 mt-2">
-                                    <template x-for="addon in item.addons">
-                                        <span class="text-[10px] bg-gray-700 text-gray-300 px-1.5 py-0.5 rounded border border-gray-600" x-text="'+ ' + addon.name"></span>
-                                    </template>
-                                </div>
-                            </div>
-                            <button @click="removeFromCart(item.id)" class="text-red-500 hover:text-red-400 p-2 bg-red-500/10 rounded-lg hover:bg-red-500/20 transition"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
-                        </div>
-                    </template>
-                </div>
-
-                <!-- FOOTER (Fixed Bottom - Checkout Button) -->
-                <div class="p-6 border-t border-gray-700 bg-[#0F172A] flex-shrink-0 shadow-[0_-5px_15px_rgba(0,0,0,0.3)] space-y-4">
-                    <div class="flex justify-between items-center text-sm text-gray-400">
-                        <span>Total Pembayaran</span>
-                        <span class="text-2xl font-bold text-white" x-text="'Rp ' + formatRupiah(grandTotal)"></span>
-                    </div>
-                    <button @click="processCheckout()" class="w-full bg-brand-green hover:bg-green-400 text-black font-bold py-4 rounded-xl shadow-lg transition transform active:scale-95 flex justify-center items-center gap-2">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-                        Pesan via WhatsApp
-                    </button>
-                </div>
-            </div>
+            
+            @include('partials.user-cart')
 
         </div>
     </div>

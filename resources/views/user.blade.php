@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PasarNgalam - Kuliner Terbaik Malang</title>
     
-    <!-- Tailwind & Alpine -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     
+    <!-- Config Warna -->
     <script>
         tailwind.config = {
             theme: {
@@ -35,6 +37,8 @@
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         [x-cloak] { display: none !important; }
+        
+        /* Animasi Badge Keranjang */
         .cart-badge { animation: bounce 0.5s; }
         @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
     </style>
@@ -44,50 +48,52 @@
           showModal: false,
           modalView: 'merchant_detail', // 'merchant_detail', 'menu_customization', 'cart_detail'
           
+          // Data Sementara
           selectedMerchant: {}, 
           selectedMenu: {},
 
-          // CART STATE (KERANJANG)
+          // STATE KERANJANG
           cart: [],
           
-          // Form State
+          // State Form Menu
           qty: 1,
           selectedAddons: [],
           note: '',
 
-          // Format Rupiah
+          // Helper Format Rupiah
           formatRupiah(number) {
               return new Intl.NumberFormat('id-ID').format(number);
           },
 
-          // Hitung Harga Item saat Kustomisasi
+          // Hitung Harga Item saat Kustomisasi (Menu + Addons) * Qty
           get currentItemTotal() {
               if(!this.selectedMenu.price) return 0;
               let addonTotal = this.selectedAddons.reduce((sum, item) => sum + item.price, 0);
               return (this.selectedMenu.price + addonTotal) * this.qty;
           },
 
-          // Hitung Total Semua Keranjang
+          // Hitung Total Semua Belanjaan
           get grandTotal() {
               return this.cart.reduce((sum, item) => sum + item.total, 0);
           },
 
-          // Hitung Jumlah Item di Keranjang
+          // Hitung Jumlah Item (Badge)
           get cartCount() {
               return this.cart.reduce((sum, item) => sum + item.qty, 0);
           },
 
-          // Aksi 1: Buka Toko
+          // LOGIC 1: Buka Modal Toko
           openMerchantModal(merchant) {
               this.selectedMerchant = merchant;
               this.modalView = 'merchant_detail';
               this.showModal = true;
           },
 
-          // Aksi 2: Pilih Menu
+          // LOGIC 2: Pilih Menu Spesifik
           openMenuCustomization(menu) {
               this.selectedMenu = {
                   ...menu,
+                  // Simulasi Add-ons (Default dummy)
                   addons_available: [
                       { name: 'Extra Sambal', price: 3000 },
                       { name: 'Nasi Tambah', price: 5000 },
@@ -101,7 +107,7 @@
               this.modalView = 'menu_customization';
           },
 
-          // Aksi 3: Masukkan ke Keranjang
+          // LOGIC 3: Tambah ke Keranjang
           addToCart() {
               const item = {
                   id: Date.now(), // ID Unik
@@ -114,10 +120,10 @@
                   total: this.currentItemTotal
               };
               this.cart.push(item);
-              this.modalView = 'merchant_detail'; // Balik ke list menu
+              this.modalView = 'merchant_detail'; // Balik ke list menu toko
           },
 
-          // Aksi 4: Buka Keranjang (Checkout)
+          // LOGIC 4: Buka Halaman Keranjang di Modal
           openCart() {
               if (this.cart.length === 0) {
                   alert('Keranjang masih kosong!');
@@ -127,7 +133,7 @@
               this.showModal = true;
           },
 
-          // Aksi 5: Hapus Item
+          // LOGIC 5: Hapus Item dari Keranjang
           removeFromCart(id) {
               this.cart = this.cart.filter(item => item.id !== id);
               if (this.cart.length === 0) {
@@ -135,26 +141,24 @@
               }
           },
 
-          // Aksi 6: Proses Checkout (Simulasi WA)
+          // LOGIC 6: Proses Checkout (Pindah ke Halaman Web Checkout)
           processCheckout() {
-              let message = 'Halo, saya mau pesan via PasarNgalam:%0A';
-              this.cart.forEach(item => {
-                  message += `- ${item.name} (${item.qty}x)`;
-                  if(item.addons.length) message += ` + Addons`;
-                  message += `%0A`;
-              });
-              message += `%0ATotal: Rp ${this.formatRupiah(this.grandTotal)}`;
+              if (this.cart.length === 0) {
+                  alert('Keranjang kosong!');
+                  return;
+              }
               
-              // Redirect ke WA (Simulasi)
-              window.open(`https://wa.me/?text=${message}`, '_blank');
+              // 1. Simpan keranjang ke LocalStorage browser
+              localStorage.setItem('pasarNgalamCart', JSON.stringify(this.cart));
               
-              // Reset
-              this.cart = [];
-              this.showModal = false;
-              alert('Pesanan diteruskan ke WhatsApp Penjual!');
+              // 2. Redirect ke halaman checkout Laravel
+              window.location.href = '{{ route('checkout') }}';
           },
 
+          // Navigasi Balik
           backToMerchant() { this.modalView = 'merchant_detail'; },
+          
+          // Logic Checkbox Addon
           toggleAddon(addon) {
               const index = this.selectedAddons.findIndex(a => a.name === addon.name);
               if (index === -1) this.selectedAddons.push(addon);
@@ -204,7 +208,7 @@
         </div>
     </nav>
 
-    <!-- CONTENT DATA DUMMY -->
+    <!-- DATA DUMMY (Struktur Toko -> Menu) -->
     @php
         $merchants = [
             [
@@ -270,7 +274,7 @@
         </div>
     </div>
 
-    <!-- CONTENT GRID -->
+    <!-- CONTENT GRID (REKOMENDASI TOKO) -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 relative z-20 pb-20">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             @foreach($merchants as $merchant)
@@ -296,7 +300,18 @@
         </div>
     </div>
 
-    <!-- INCLUDE MODAL -->
+    <!-- BANNER AJAKAN -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+        <div class="relative rounded-[2.5rem] overflow-hidden bg-gradient-to-br from-brand-card to-gray-900 border border-white/5 shadow-2xl p-10 md:p-16 flex flex-col md:flex-row items-center justify-between gap-10">
+            <div class="max-w-2xl relative z-10">
+                <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-6">Punya Usaha Kuliner? <br><span class="text-brand-green">Gabung PasarNgalam!</span></h2>
+                <p class="text-gray-300 text-lg mb-8">Jangkau ribuan pelanggan baru dan kelola warungmu dengan dashboard canggih.</p>
+                <a href="{{ url('/mitra-login') }}" class="px-10 py-5 font-bold text-black bg-brand-green rounded-full hover:scale-105 transition shadow-[0_0_30px_rgba(0,224,115,0.3)]">Buka Warung Sekarang</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- INCLUDE MODAL (WAJIB ADA) -->
     @include('partials.user-modal')
 
 </body>

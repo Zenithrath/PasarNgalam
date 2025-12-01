@@ -18,3 +18,7 @@ Route::get('/merchant/dashboard', function () {
 Route::get('/login', function () {
     return view('auth.login'); 
 })->name('login');
+
+Route::get('/checkout', function () {
+    return view('checkout');
+})->name('checkout');
