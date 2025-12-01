@@ -14,3 +14,7 @@ Route::get('/mitra-login', function () {
 Route::get('/merchant/dashboard', function () {
     return view('merchant.dashboard');
 });
+
+Route::get('/login', function () {
+    return view('auth.login'); 
+})->name('login');
