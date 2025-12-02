@@ -4,47 +4,72 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PasarNgalam - Kuliner Terbaik Malang</title>
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-    
+
     <!-- Config Warna -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'brand-green': '#00E073',
-                        'brand-dark': '#0F172A',
-                        'brand-card': '#1E293B',
-                    },
-                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                        'brand-green': '#00E073'
+                        , 'brand-dark': '#0F172A'
+                        , 'brand-card': '#1E293B'
+                    , }
+                    , fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
                 }
             }
         }
+
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
+
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
         .glass-panel {
             background: rgba(30, 41, 59, 0.7);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        [x-cloak] { display: none !important; }
-        
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
+
         /* Animasi Badge Keranjang */
-        .cart-badge { animation: bounce 0.5s; }
-        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+        .cart-badge {
+            animation: bounce 0.5s;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+        }
+
     </style>
 </head>
-<body class="bg-brand-dark text-white min-h-screen relative selection:bg-brand-green selection:text-black"
-      x-data="{
+<body class="bg-brand-dark text-white min-h-screen relative selection:bg-brand-green selection:text-black" x-data="{
           showModal: false,
           modalView: 'merchant_detail', // 'merchant_detail', 'menu_customization', 'cart_detail'
           
@@ -172,37 +197,69 @@
             <div class="flex items-center justify-between h-20">
                 <!-- Logo -->
                 <div class="flex items-center gap-3">
-                    <div class="bg-brand-green p-2 rounded-xl shadow-[0_0_15px_rgba(0,224,115,0.4)]">
-                        <svg class="h-6 w-6 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                        </svg>
-                    </div>
-                    <span class="text-xl font-bold text-white tracking-tight hidden md:block">PasarNgalam</span>
-                </div>
-                
-                <!-- Menu Desktop -->
-                <div class="hidden md:flex space-x-8 items-center">
-                    <a href="#" class="text-white hover:text-brand-green font-medium transition">Beranda</a>
-                    <a href="#" class="text-gray-300 hover:text-brand-green font-medium transition">Promo</a>
-                    <a href="{{ url('/mitra-login') }}" class="text-brand-green font-bold border border-brand-green/30 px-4 py-1.5 rounded-full hover:bg-brand-green hover:text-black transition shadow-[0_0_10px_rgba(0,224,115,0.2)]">
-                        Buka Warung
+                    <a href="{{ url('/') }}" class="flex items-center gap-3">
+                        <div class="bg-brand-green p-2 rounded-xl shadow-[0_0_15px_rgba(0,224,115,0.4)]">
+                            <svg class="h-6 w-6 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            </svg>
+                        </div>
+                        <span class="text-xl font-bold text-white tracking-tight hidden md:block">PasarNgalam</span>
                     </a>
                 </div>
 
-                <!-- Right Actions -->
-                <div class="flex items-center gap-4">
-                    
-                    <!-- TOMBOL KERANJANG (NAVBAR) -->
-                    <button @click="openCart()" class="relative bg-gray-800 p-2.5 rounded-xl hover:bg-gray-700 transition border border-gray-600 group">
-                        <svg class="w-6 h-6 text-gray-300 group-hover:text-brand-green transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                        <!-- Badge Counter -->
-                        <div x-show="cartCount > 0" x-transition.scale class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-[#0F172A] cart-badge" x-text="cartCount"></div>
-                    </button>
+                <!-- Menu Desktop & Tombol Aksi -->
+                <div class="flex items-center gap-6">
 
-                    <!-- Tombol Masuk -->
-                    <a href="{{ route('login') }}" class="bg-brand-card hover:bg-gray-700 text-white border border-gray-600 px-5 py-2.5 rounded-xl font-bold text-sm transition hidden sm:block">Masuk</a>
+                    <!-- LOGIKA TOMBOL PINTAR BERDASARKAN ROLE -->
+                    @auth
+                    @if(Auth::user()->role == 'merchant')
+                    <!-- TOMBOL KHUSUS MERCHANT -->
+                    <a href="{{ route('merchant.dashboard') }}" class="hidden md:flex items-center gap-2 text-brand-green font-bold border border-brand-green/30 px-5 py-2 rounded-xl hover:bg-brand-green hover:text-black transition shadow-[0_0_15px_rgba(0,224,115,0.2)]">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        Ke Dashboard Warung
+                    </a>
+
+                    @elseif(Auth::user()->role == 'driver')
+                    <!-- TOMBOL KHUSUS DRIVER -->
+                    <a href="{{ route('driver.dashboard') }}" class="hidden md:flex items-center gap-2 text-brand-green font-bold border border-brand-green/30 px-5 py-2 rounded-xl hover:bg-brand-green hover:text-black transition shadow-[0_0_15px_rgba(0,224,115,0.2)]">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        Ke Panel Driver
+                    </a>
+
+                    @else
+                    <!-- TOMBOL UNTUK USER BIASA (UPSELL) -->
+                    <a href="{{ route('login') }}" class="hidden md:block text-gray-300 hover:text-white font-medium transition">Gabung Mitra</a>
+                    @endif
+
+                    <!-- Profil & Logout (Semua User Login) -->
+                    <div class="flex items-center gap-3 pl-4 border-l border-gray-700">
+                        <div class="text-right hidden sm:block">
+                            <p class="text-xs text-gray-400">Halo,</p>
+                            <p class="text-sm font-bold text-white">{{ Auth::user()->name }}</p>
+                        </div>
+
+                        <!-- Tombol Logout -->
+                        <form action="{{ route('logout') }}" method="POST">
+                            @csrf
+                            <button type="submit" class="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/50 p-2.5 rounded-xl transition" title="Keluar">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                            </button>
+                        </form>
+                    </div>
+
+                    @else
+                    <!-- JIKA BELUM LOGIN (GUEST) -->
+                    <div class="flex items-center gap-4">
+                        <a href="{{ route('login') }}" class="text-gray-300 hover:text-brand-green font-medium transition hidden md:block">Promo</a>
+                        <a href="{{ route('login') }}" class="bg-white text-black font-bold px-6 py-2.5 rounded-xl hover:bg-gray-200 transition shadow-lg">
+                            Masuk / Daftar
+                        </a>
+                    </div>
+                    @endauth
+
                 </div>
             </div>
         </div>
@@ -210,48 +267,48 @@
 
     <!-- DATA DUMMY (Struktur Toko -> Menu) -->
     @php
-        $merchants = [
-            [
-                'name' => 'Warung Bu Kris',
-                'category' => 'Masakan Jawa, Penyet',
-                'rating' => '4.8',
-                'time' => '25-35 min',
-                'dist' => '1.2 km',
-                'promo' => 'Diskon 20%',
-                'img' => 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&fit=crop',
-                'menus' => [
-                    ['name' => 'Nasi Penyet Ayam', 'price' => 25000, 'desc' => 'Ayam goreng penyet sambal bawang + lalapan', 'img' => 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400'],
-                    ['name' => 'Empal Suwir', 'price' => 30000, 'desc' => 'Daging empal suwir manis gurih', 'img' => 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'],
-                    ['name' => 'Es Jeruk', 'price' => 8000, 'desc' => 'Jeruk peras murni', 'img' => 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400'],
-                ]
-            ],
-            [
-                'name' => 'Bakso President',
-                'category' => 'Bakso, Mie Ayam',
-                'rating' => '4.9',
-                'time' => '20-30 min',
-                'dist' => '0.8 km',
-                'promo' => 'Gratis Ongkir',
-                'img' => 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=600&fit=crop',
-                'menus' => [
-                    ['name' => 'Bakso Campur', 'price' => 20000, 'desc' => 'Pentol halus, kasar, goreng, tahu, siomay', 'img' => 'https://images.unsplash.com/photo-1617384750865-c323f4f722a9?w=400'],
-                    ['name' => 'Mie Ayam Bakso', 'price' => 18000, 'desc' => 'Mie ayam jamur + 2 pentol kecil', 'img' => 'https://images.unsplash.com/photo-1585032226651-759b368d7246?w=400'],
-                ]
-            ],
-            [
-                'name' => 'Kopi Tuku Ijen',
-                'category' => 'Minuman, Kopi',
-                'rating' => '4.5',
-                'time' => '10-20 min',
-                'dist' => '0.5 km',
-                'promo' => 'Beli 2 Gratis 1',
-                'img' => 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?w=600&fit=crop',
-                'menus' => [
-                    ['name' => 'Es Kopi Susu Tetangga', 'price' => 18000, 'desc' => 'Kopi susu gula aren signature', 'img' => 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400'],
-                    ['name' => 'Tahu Walik', 'price' => 12000, 'desc' => 'Cemilan tahu isi aci ayam', 'img' => 'https://images.unsplash.com/photo-1625488109605-728469e77995?w=400'],
-                ]
-            ],
-        ];
+    $merchants = [
+    [
+    'name' => 'Warung Bu Kris',
+    'category' => 'Masakan Jawa, Penyet',
+    'rating' => '4.8',
+    'time' => '25-35 min',
+    'dist' => '1.2 km',
+    'promo' => 'Diskon 20%',
+    'img' => 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&fit=crop',
+    'menus' => [
+    ['name' => 'Nasi Penyet Ayam', 'price' => 25000, 'desc' => 'Ayam goreng penyet sambal bawang + lalapan', 'img' => 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400'],
+    ['name' => 'Empal Suwir', 'price' => 30000, 'desc' => 'Daging empal suwir manis gurih', 'img' => 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'],
+    ['name' => 'Es Jeruk', 'price' => 8000, 'desc' => 'Jeruk peras murni', 'img' => 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400'],
+    ]
+    ],
+    [
+    'name' => 'Bakso President',
+    'category' => 'Bakso, Mie Ayam',
+    'rating' => '4.9',
+    'time' => '20-30 min',
+    'dist' => '0.8 km',
+    'promo' => 'Gratis Ongkir',
+    'img' => 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=600&fit=crop',
+    'menus' => [
+    ['name' => 'Bakso Campur', 'price' => 20000, 'desc' => 'Pentol halus, kasar, goreng, tahu, siomay', 'img' => 'https://images.unsplash.com/photo-1617384750865-c323f4f722a9?w=400'],
+    ['name' => 'Mie Ayam Bakso', 'price' => 18000, 'desc' => 'Mie ayam jamur + 2 pentol kecil', 'img' => 'https://images.unsplash.com/photo-1585032226651-759b368d7246?w=400'],
+    ]
+    ],
+    [
+    'name' => 'Kopi Tuku Ijen',
+    'category' => 'Minuman, Kopi',
+    'rating' => '4.5',
+    'time' => '10-20 min',
+    'dist' => '0.5 km',
+    'promo' => 'Beli 2 Gratis 1',
+    'img' => 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?w=600&fit=crop',
+    'menus' => [
+    ['name' => 'Es Kopi Susu Tetangga', 'price' => 18000, 'desc' => 'Kopi susu gula aren signature', 'img' => 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400'],
+    ['name' => 'Tahu Walik', 'price' => 12000, 'desc' => 'Cemilan tahu isi aci ayam', 'img' => 'https://images.unsplash.com/photo-1625488109605-728469e77995?w=400'],
+    ]
+    ],
+    ];
     @endphp
 
     <!-- HERO SECTION -->
@@ -283,7 +340,7 @@
                     <img src="{{ $merchant['img'] }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
                     <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition"></div>
                     @if($merchant['promo'])
-                        <div class="absolute top-4 right-4 bg-brand-green text-black text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">{{ $merchant['promo'] }}</div>
+                    <div class="absolute top-4 right-4 bg-brand-green text-black text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">{{ $merchant['promo'] }}</div>
                     @endif
                 </div>
                 <div class="p-6">

@@ -21,7 +21,14 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'phone',
+        'store_name',
+        'vehicle_plate',
+        'vehicle_type',
+        'is_active'
     ];
+
 
     /**
      * The attributes that should be hidden for serialization.
@@ -32,6 +39,21 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+
+    public function products()
+    {
+        return $this->hasMany(Product::class, 'merchant_id');
+    }
+
+    public function merchantOrders()
+    {
+        return $this->hasMany(Order::class, 'merchant_id');
+    }
+
+    public function driverOrders()
+    {
+        return $this->hasMany(Order::class, 'driver_id');
+    }
 
     /**
      * Get the attributes that should be cast.
