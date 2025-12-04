@@ -80,14 +80,14 @@
     </div>
 
     <!-- MAIN CONTAINER -->
-    <div class="relative z-10 w-full max-w-5xl bg-[#1E293B]/60 backdrop-blur-xl border border-white/10 rounded-[2rem] shadow-2xl overflow-hidden flex min-h-[600px]">
+    <div class="relative z-10 w-full max-w-5xl bg-[#1E293B]/60 backdrop-blur-xl border border-white/10 rounded-2rem shadow-2xl overflow-hidden flex min-h-[600px]">
 
         <!-- LEFT SIDE: VISUAL (Desktop Only) -->
         <div class="hidden lg:flex w-1/2 relative bg-gray-900 items-center justify-center p-12 overflow-hidden group">
             <div class="absolute inset-0 bg-brand-green/10 mix-blend-overlay z-10"></div>
             <!-- Gambar Berubah Sesuai Role -->
             <img :src="role === 'merchant' ? 'https://images.unsplash.com/photo-1556910103-1c02745a30bf?auto=format&fit=crop&w=800' : 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000&auto=format&fit=crop'" class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition duration-1000">
-            <div class="absolute inset-0 bg-gradient-to-t from-brand-dark via-brand-dark/40 to-transparent"></div>
+            <div class="absolute inset-0 bg-linear-to-t from-brand-dark via-brand-dark/40 to-transparent"></div>
 
             <div class="relative z-20 text-center">
                 <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-green/20 backdrop-blur-md border border-brand-green/30 mb-6 shadow-[0_0_30px_rgba(0,224,115,0.3)]">

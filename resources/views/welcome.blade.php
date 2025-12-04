@@ -4,190 +4,154 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PasarNgalam - Kuliner Terbaik Malang</title>
-
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
-
+    
     <!-- Config Warna -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'brand-green': '#00E073'
-                        , 'brand-dark': '#0F172A'
-                        , 'brand-card': '#1E293B'
-                    , }
-                    , fontFamily: {
-                        sans: ['Inter', 'sans-serif']
-                    }
+                        'brand-green': '#00E073',
+                        'brand-dark': '#0F172A',
+                        'brand-card': '#1E293B',
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
                 }
             }
         }
-
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
+    
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-
+        body { font-family: 'Inter', sans-serif; }
         .glass-panel {
             background: rgba(30, 41, 59, 0.7);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
-
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-
-        [x-cloak] {
-            display: none !important;
-        }
-
-        /* Animasi Badge Keranjang */
-        .cart-badge {
-            animation: bounce 0.5s;
-        }
-
-        @keyframes bounce {
-
-            0%,
-            100% {
-                transform: scale(1);
-            }
-
-            50% {
-                transform: scale(1.2);
-            }
-        }
-
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        [x-cloak] { display: none !important; }
+        .cart-badge { animation: bounce 0.5s; }
+        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
     </style>
 </head>
-<body class="bg-brand-dark text-white min-h-screen relative selection:bg-brand-green selection:text-black" x-data="{
+<body class="bg-brand-dark text-white min-h-screen relative selection:bg-brand-green selection:text-black"
+      x-data="{
           showModal: false,
-          modalView: 'merchant_detail', // 'merchant_detail', 'menu_customization', 'cart_detail'
+          modalView: 'merchant_detail', 
           
-          // Data Sementara
-          selectedMerchant: {}, 
+          selectedMerchant: { menus: [] },
           selectedMenu: {},
-
-          // STATE KERANJANG
           cart: [],
           
-          // State Form Menu
           qty: 1,
-          selectedAddons: [],
+          selectedAddons: [], // Menyimpan addon yang dipilih user
           note: '',
 
-          // Helper Format Rupiah
           formatRupiah(number) {
               return new Intl.NumberFormat('id-ID').format(number);
           },
 
-          // Hitung Harga Item saat Kustomisasi (Menu + Addons) * Qty
+          // Hitung Total (Harga Menu + Total Addons) * Qty
           get currentItemTotal() {
               if(!this.selectedMenu.price) return 0;
+              // Hitung total harga addon yang dipilih
               let addonTotal = this.selectedAddons.reduce((sum, item) => sum + item.price, 0);
               return (this.selectedMenu.price + addonTotal) * this.qty;
           },
 
-          // Hitung Total Semua Belanjaan
           get grandTotal() {
               return this.cart.reduce((sum, item) => sum + item.total, 0);
           },
 
-          // Hitung Jumlah Item (Badge)
           get cartCount() {
               return this.cart.reduce((sum, item) => sum + item.qty, 0);
           },
 
-          // LOGIC 1: Buka Modal Toko
           openMerchantModal(merchant) {
               this.selectedMerchant = merchant;
               this.modalView = 'merchant_detail';
               this.showModal = true;
           },
 
-          // LOGIC 2: Pilih Menu Spesifik
           openMenuCustomization(menu) {
               this.selectedMenu = {
                   ...menu,
-                  // Simulasi Add-ons (Default dummy)
+                  // Simulasi Addons (Nanti bisa diambil dari DB jika sudah ada tabelnya)
                   addons_available: [
-                      { name: 'Extra Sambal', price: 3000 },
-                      { name: 'Nasi Tambah', price: 5000 },
-                      { name: 'Kerupuk', price: 2000 },
-                      { name: 'Level Pedas: Neraka', price: 0 }
+                      { name: 'Extra Pedas', price: 0 },
+                      { name: 'Tambah Nasi', price: 4000 },
+                      { name: 'Tambah Telur', price: 3000 },
+                      { name: 'Kerupuk', price: 2000 }
                   ]
               };
               this.qty = 1;
-              this.selectedAddons = [];
+              this.selectedAddons = []; // Reset pilihan addon
               this.note = '';
               this.modalView = 'menu_customization';
           },
 
-          // LOGIC 3: Tambah ke Keranjang
           addToCart() {
               const item = {
-                  id: Date.now(), // ID Unik
+                  id: Date.now(),
+                  product_id: this.selectedMenu.id,
+                  merchant_id: this.selectedMenu.merchant_id,
                   name: this.selectedMenu.name,
                   img: this.selectedMenu.img,
                   price: this.selectedMenu.price,
                   qty: this.qty,
-                  addons: this.selectedAddons,
+                  addons: this.selectedAddons, // Simpan addon ke cart
                   note: this.note,
                   total: this.currentItemTotal
               };
+              
               this.cart.push(item);
-              this.modalView = 'merchant_detail'; // Balik ke list menu toko
+              localStorage.setItem('pasarNgalamCart', JSON.stringify(this.cart));
+              this.modalView = 'merchant_detail';
           },
 
-          // LOGIC 4: Buka Halaman Keranjang di Modal
           openCart() {
-              if (this.cart.length === 0) {
-                  alert('Keranjang masih kosong!');
-                  return;
-              }
               this.modalView = 'cart_detail';
               this.showModal = true;
           },
 
-          // LOGIC 5: Hapus Item dari Keranjang
           removeFromCart(id) {
               this.cart = this.cart.filter(item => item.id !== id);
-              if (this.cart.length === 0) {
-                  this.modalView = 'merchant_detail';
-              }
+              localStorage.setItem('pasarNgalamCart', JSON.stringify(this.cart));
           },
 
-          // LOGIC 6: Proses Checkout (Pindah ke Halaman Web Checkout)
           processCheckout() {
               if (this.cart.length === 0) {
-                  alert('Keranjang kosong!');
+                  alert('Keranjang kosong! Pilih menu dulu.');
                   return;
               }
-              
-              // 1. Simpan keranjang ke LocalStorage browser
-              localStorage.setItem('pasarNgalamCart', JSON.stringify(this.cart));
-              
-              // 2. Redirect ke halaman checkout Laravel
               window.location.href = '{{ route('checkout') }}';
           },
 
-          // Navigasi Balik
           backToMerchant() { this.modalView = 'merchant_detail'; },
           
           // Logic Checkbox Addon
           toggleAddon(addon) {
+              // Cek apakah addon sudah ada di array selectedAddons
               const index = this.selectedAddons.findIndex(a => a.name === addon.name);
-              if (index === -1) this.selectedAddons.push(addon);
-              else this.selectedAddons.splice(index, 1);
+              if (index === -1) {
+                  this.selectedAddons.push(addon); // Kalau belum, masukkan
+              } else {
+                  this.selectedAddons.splice(index, 1); // Kalau sudah, hapus (uncheck)
+              }
+          },
+          
+          init() {
+              const savedCart = localStorage.getItem('pasarNgalamCart');
+              if (savedCart) {
+                  this.cart = JSON.parse(savedCart);
+              }
           }
       }">
 
@@ -195,7 +159,6 @@
     <nav class="glass-panel fixed w-full z-50 top-0 transition-all border-b-0">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-20">
-                <!-- Logo -->
                 <div class="flex items-center gap-3">
                     <a href="{{ url('/') }}" class="flex items-center gap-3">
                         <div class="bg-brand-green p-2 rounded-xl shadow-[0_0_15px_rgba(0,224,115,0.4)]">
@@ -206,124 +169,57 @@
                         <span class="text-xl font-bold text-white tracking-tight hidden md:block">PasarNgalam</span>
                     </a>
                 </div>
-
-                <!-- Menu Desktop & Tombol Aksi -->
-                <div class="flex items-center gap-6">
-
-                    <!-- LOGIKA TOMBOL PINTAR BERDASARKAN ROLE -->
+                
+                <div class="hidden md:flex space-x-8 items-center">
+                    <a href="#" class="text-white hover:text-brand-green font-medium transition">Beranda</a>
+                    <a href="#" class="text-gray-300 hover:text-brand-green font-medium transition">Promo</a>
                     @auth
-                    @if(Auth::user()->role == 'merchant')
-                    <!-- TOMBOL KHUSUS MERCHANT -->
-                    <a href="{{ route('merchant.dashboard') }}" class="hidden md:flex items-center gap-2 text-brand-green font-bold border border-brand-green/30 px-5 py-2 rounded-xl hover:bg-brand-green hover:text-black transition shadow-[0_0_15px_rgba(0,224,115,0.2)]">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                        Ke Dashboard Warung
-                    </a>
-
-                    @elseif(Auth::user()->role == 'driver')
-                    <!-- TOMBOL KHUSUS DRIVER -->
-                    <a href="{{ route('driver.dashboard') }}" class="hidden md:flex items-center gap-2 text-brand-green font-bold border border-brand-green/30 px-5 py-2 rounded-xl hover:bg-brand-green hover:text-black transition shadow-[0_0_15px_rgba(0,224,115,0.2)]">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        Ke Panel Driver
-                    </a>
-
+                        @if(Auth::user()->role == 'merchant')
+                            <a href="{{ route('merchant.dashboard') }}" class="text-brand-green font-bold border border-brand-green/30 px-4 py-1.5 rounded-full hover:bg-brand-green hover:text-black transition">Dashboard Warung</a>
+                        @elseif(Auth::user()->role == 'driver')
+                            <a href="{{ route('driver.dashboard') }}" class="text-brand-green font-bold border border-brand-green/30 px-4 py-1.5 rounded-full hover:bg-brand-green hover:text-black transition">Panel Driver</a>
+                        @endif
                     @else
-                    <!-- TOMBOL UNTUK USER BIASA (UPSELL) -->
-                    <a href="{{ route('login') }}" class="hidden md:block text-gray-300 hover:text-white font-medium transition">Gabung Mitra</a>
-                    @endif
+                        <a href="{{ route('login') }}" class="text-brand-green font-bold border border-brand-green/30 px-4 py-1.5 rounded-full hover:bg-brand-green hover:text-black transition shadow-[0_0_10px_rgba(0,224,115,0.2)]">Gabung Mitra</a>
+                    @endauth
+                </div>
 
-                    <!-- Profil & Logout (Semua User Login) -->
-                    <div class="flex items-center gap-3 pl-4 border-l border-gray-700">
-                        <div class="text-right hidden sm:block">
+                <div class="flex items-center gap-4">
+                    <button @click="openCart()" class="relative bg-gray-800 p-2.5 rounded-xl hover:bg-gray-700 transition border border-gray-600 group">
+                        <svg class="w-6 h-6 text-gray-300 group-hover:text-brand-green transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        <div x-show="cartCount > 0" x-transition.scale class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-[#0F172A] cart-badge" x-text="cartCount"></div>
+                    </button>
+
+                    @auth
+                        <div class="text-right hidden sm:block mr-2">
                             <p class="text-xs text-gray-400">Halo,</p>
                             <p class="text-sm font-bold text-white">{{ Auth::user()->name }}</p>
                         </div>
-
-                        <!-- Tombol Logout -->
                         <form action="{{ route('logout') }}" method="POST">
                             @csrf
-                            <button type="submit" class="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/50 p-2.5 rounded-xl transition" title="Keluar">
-                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                            <button type="submit" class="bg-red-500/20 hover:bg-red-600 text-red-400 hover:text-white p-2.5 rounded-xl transition">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                             </button>
                         </form>
-                    </div>
-
                     @else
-                    <!-- JIKA BELUM LOGIN (GUEST) -->
-                    <div class="flex items-center gap-4">
-                        <a href="{{ route('login') }}" class="text-gray-300 hover:text-brand-green font-medium transition hidden md:block">Promo</a>
-                        <a href="{{ route('login') }}" class="bg-white text-black font-bold px-6 py-2.5 rounded-xl hover:bg-gray-200 transition shadow-lg">
-                            Masuk / Daftar
-                        </a>
-                    </div>
+                        <a href="{{ route('login') }}" class="bg-brand-card hover:bg-gray-700 text-white border border-gray-600 px-5 py-2.5 rounded-xl font-bold text-sm transition hidden sm:block">Masuk</a>
                     @endauth
-
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- DATA DUMMY (Struktur Toko -> Menu) -->
-    @php
-    $merchants = [
-    [
-    'name' => 'Warung Bu Kris',
-    'category' => 'Masakan Jawa, Penyet',
-    'rating' => '4.8',
-    'time' => '25-35 min',
-    'dist' => '1.2 km',
-    'promo' => 'Diskon 20%',
-    'img' => 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&fit=crop',
-    'menus' => [
-    ['name' => 'Nasi Penyet Ayam', 'price' => 25000, 'desc' => 'Ayam goreng penyet sambal bawang + lalapan', 'img' => 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400'],
-    ['name' => 'Empal Suwir', 'price' => 30000, 'desc' => 'Daging empal suwir manis gurih', 'img' => 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'],
-    ['name' => 'Es Jeruk', 'price' => 8000, 'desc' => 'Jeruk peras murni', 'img' => 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400'],
-    ]
-    ],
-    [
-    'name' => 'Bakso President',
-    'category' => 'Bakso, Mie Ayam',
-    'rating' => '4.9',
-    'time' => '20-30 min',
-    'dist' => '0.8 km',
-    'promo' => 'Gratis Ongkir',
-    'img' => 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=600&fit=crop',
-    'menus' => [
-    ['name' => 'Bakso Campur', 'price' => 20000, 'desc' => 'Pentol halus, kasar, goreng, tahu, siomay', 'img' => 'https://images.unsplash.com/photo-1617384750865-c323f4f722a9?w=400'],
-    ['name' => 'Mie Ayam Bakso', 'price' => 18000, 'desc' => 'Mie ayam jamur + 2 pentol kecil', 'img' => 'https://images.unsplash.com/photo-1585032226651-759b368d7246?w=400'],
-    ]
-    ],
-    [
-    'name' => 'Kopi Tuku Ijen',
-    'category' => 'Minuman, Kopi',
-    'rating' => '4.5',
-    'time' => '10-20 min',
-    'dist' => '0.5 km',
-    'promo' => 'Beli 2 Gratis 1',
-    'img' => 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?w=600&fit=crop',
-    'menus' => [
-    ['name' => 'Es Kopi Susu Tetangga', 'price' => 18000, 'desc' => 'Kopi susu gula aren signature', 'img' => 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400'],
-    ['name' => 'Tahu Walik', 'price' => 12000, 'desc' => 'Cemilan tahu isi aci ayam', 'img' => 'https://images.unsplash.com/photo-1625488109605-728469e77995?w=400'],
-    ]
-    ],
-    ];
-    @endphp
-
     <!-- HERO SECTION -->
     <div class="relative h-[500px] w-full flex items-center justify-center mt-20">
         <div class="absolute inset-0 overflow-hidden">
-            <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=1920&fit=crop" alt="Malang Night Market" class="w-full h-full object-cover">
+            <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=1920&fit=crop" class="w-full h-full object-cover">
             <div class="absolute inset-0 bg-gradient-to-t from-brand-dark via-brand-dark/80 to-brand-dark/40"></div>
         </div>
         <div class="relative z-10 text-center px-4 w-full max-w-4xl">
-            <h1 class="text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-brand-green to-teal-400 mb-6 drop-shadow-2xl">
-                Kuliner Ngalam
-            </h1>
-            <p class="text-xl text-gray-200 mb-10 font-light max-w-2xl mx-auto">
-                Temukan cita rasa legendaris dan dukung UMKM lokal langsung dari smartphone Anda.
-            </p>
+            <h1 class="text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-brand-green to-teal-400 mb-6 drop-shadow-2xl">Kuliner Ngalam</h1>
+            <p class="text-xl text-gray-200 mb-10 font-light max-w-2xl mx-auto">Temukan cita rasa legendaris dan dukung UMKM lokal langsung dari smartphone Anda.</p>
             <div class="relative max-w-xl mx-auto">
                 <input type="text" class="block w-full pl-8 pr-24 py-5 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-green shadow-2xl transition" placeholder="Cari Toko atau Warung...">
                 <button class="absolute right-2 top-2 bottom-2 bg-brand-green hover:bg-green-400 text-black px-8 rounded-full font-bold transition">Cari</button>
@@ -331,45 +227,197 @@
         </div>
     </div>
 
-    <!-- CONTENT GRID (REKOMENDASI TOKO) -->
+    <!-- CONTENT GRID -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 relative z-20 pb-20">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            @foreach($merchants as $merchant)
-            <div @click="openMerchantModal({{ json_encode($merchant) }})" class="glass-panel rounded-3xl overflow-hidden hover:border-brand-green/50 transition duration-300 group cursor-pointer relative">
-                <div class="relative h-48 overflow-hidden">
-                    <img src="{{ $merchant['img'] }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
-                    <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition"></div>
-                    @if($merchant['promo'])
-                    <div class="absolute top-4 right-4 bg-brand-green text-black text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">{{ $merchant['promo'] }}</div>
-                    @endif
-                </div>
-                <div class="p-6">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="text-xl font-bold text-white truncate group-hover:text-brand-green transition">{{ $merchant['name'] }}</h3>
-                        <div class="flex items-center gap-1 bg-yellow-500/10 px-2 py-1 rounded-lg border border-yellow-500/20">
-                            <span class="font-bold text-yellow-500 text-sm">★ {{ $merchant['rating'] }}</span>
+        @if($merchants->count() > 0)
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                @foreach($merchants as $merchant)
+                    @php
+                        $merchantData = [
+                            'name' => $merchant->store_name ?? $merchant->name,
+                            'category' => 'Aneka Kuliner',
+                            'rating' => '4.8',
+                            'img' => 'https://ui-avatars.com/api/?name='.urlencode($merchant->store_name).'&background=random&size=400&bold=true', 
+                            'menus' => $merchant->products->map(function($p) use ($merchant) {
+                                return [
+                                    'id' => $p->id,
+                                    'merchant_id' => $merchant->id,
+                                    'name' => $p->name,
+                                    'price' => $p->price,
+                                    'desc' => $p->description,
+                                    'img' => $p->image ? asset('storage/' . $p->image) : 'https://placehold.co/400x300?text=No+Image'
+                                ];
+                            })->values()->toArray()
+                        ];
+                    @endphp
+                    <div @click="openMerchantModal({{ json_encode($merchantData) }})" class="glass-panel rounded-3xl overflow-hidden hover:border-brand-green/50 transition duration-300 group cursor-pointer relative">
+                        <div class="relative h-48 overflow-hidden bg-gray-800">
+                            <img src="{{ $merchantData['img'] }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
+                            <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition"></div>
+                            <div class="absolute top-4 right-4 bg-brand-green text-black text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">Buka</div>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-xl font-bold text-white truncate group-hover:text-brand-green transition">{{ $merchantData['name'] }}</h3>
+                                <div class="flex items-center gap-1 bg-yellow-500/10 px-2 py-1 rounded-lg border border-yellow-500/20">
+                                    <span class="font-bold text-yellow-500 text-sm">★ {{ $merchantData['rating'] }}</span>
+                                </div>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-4 truncate">{{ $merchantData['category'] }} • {{ count($merchantData['menus']) }} Menu</p>
                         </div>
                     </div>
-                    <p class="text-gray-400 text-sm mb-4 truncate">{{ $merchant['category'] }}</p>
+                @endforeach
+            </div>
+        @else
+            <div class="text-center py-20 glass-panel rounded-3xl">
+                <div class="text-6xl mb-4">🏪</div>
+                <h2 class="text-2xl font-bold text-white mb-2">Belum Ada Warung Buka</h2>
+                <p class="text-gray-400">Jadilah mitra pertama kami!</p>
+                <a href="{{ route('login') }}" class="inline-block mt-4 text-brand-green font-bold hover:underline">Daftar Sekarang &rarr;</a>
+            </div>
+        @endif
+    </div>
+
+    <!-- MODAL POPUP -->
+    <div x-show="showModal" class="fixed inset-0 z-[60] overflow-y-auto" x-cloak>
+        <div x-show="showModal" x-transition.opacity @click="showModal = false" class="fixed inset-0 bg-black/80 backdrop-blur-sm"></div>
+        <div x-show="showModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100" class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-[#1E293B] border border-gray-700 w-full max-w-lg rounded-3xl shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
+                
+                <!-- HEADER MODAL -->
+                <div class="p-6 border-b border-gray-700 flex justify-between items-center bg-[#0F172A]">
+                    <h3 class="text-xl font-bold text-white">
+                        <span x-show="modalView === 'merchant_detail'" x-text="selectedMerchant.name"></span>
+                        <span x-show="modalView === 'menu_customization'">Pesan Menu</span>
+                        <span x-show="modalView === 'cart_detail'">Keranjang Saya</span>
+                    </h3>
+                    <button @click="showModal = false" class="text-gray-400 hover:text-white bg-gray-800 p-2 rounded-full"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
                 </div>
+
+                <!-- BODY -->
+                <div class="overflow-y-auto p-6 flex-1 no-scrollbar">
+                    
+                    <!-- VIEW 1: MERCHANT DETAIL -->
+                    <div x-show="modalView === 'merchant_detail'">
+                        <img :src="selectedMerchant.img" class="w-full h-48 object-cover rounded-2xl mb-6 border border-gray-600 bg-gray-800">
+                        <h4 class="text-gray-400 text-sm font-bold uppercase tracking-wider mb-4">Daftar Menu</h4>
+                        <div class="space-y-4">
+                            <template x-for="menu in selectedMerchant.menus" :key="menu.id">
+                                <div class="flex gap-4 p-4 rounded-xl border border-gray-700 bg-gray-800/50 hover:border-brand-green/50 cursor-pointer transition" @click="openMenuCustomization(menu)">
+                                    <img :src="menu.img" class="w-20 h-20 rounded-lg object-cover bg-gray-700">
+                                    <div class="flex-1">
+                                        <h4 class="font-bold text-white text-lg" x-text="menu.name"></h4>
+                                        <p class="text-gray-400 text-xs line-clamp-2" x-text="menu.desc || 'Tidak ada deskripsi'"></p>
+                                        <div class="mt-2 flex justify-between items-center">
+                                            <span class="text-brand-green font-bold" x-text="'Rp ' + formatRupiah(menu.price)"></span>
+                                            <button class="bg-gray-700 hover:bg-brand-green hover:text-black text-white px-3 py-1 rounded-lg text-xs font-bold transition">+ Tambah</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                            <template x-if="!selectedMerchant.menus || selectedMerchant.menus.length === 0">
+                                <div class="text-center py-8 text-gray-500">Warung ini belum mengupload menu.</div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- VIEW 2: MENU CUSTOMIZATION (SUDAH ADA ADDONS) -->
+                    <div x-show="modalView === 'menu_customization'">
+                        <button @click="backToMerchant()" class="text-gray-400 text-sm hover:text-white mb-4 flex items-center gap-1">&larr; Kembali ke Menu</button>
+                        <div class="flex gap-4 mb-6">
+                            <img :src="selectedMenu.img" class="w-24 h-24 rounded-xl object-cover border border-gray-600 bg-gray-800">
+                            <div>
+                                <h2 class="text-2xl font-bold text-white" x-text="selectedMenu.name"></h2>
+                                <p class="text-brand-green font-bold text-lg" x-text="'Rp ' + formatRupiah(selectedMenu.price)"></p>
+                            </div>
+                        </div>
+
+                        <!-- ADDONS SECTION (INI YANG KEMBALI) -->
+                        <div class="mb-6">
+                            <h4 class="font-bold text-white mb-3">Tambahan (Opsional)</h4>
+                            <div class="space-y-2">
+                                <template x-for="addon in selectedMenu.addons_available" :key="addon.name">
+                                    <label class="flex items-center justify-between p-3 rounded-lg border border-gray-700 cursor-pointer hover:bg-gray-800 transition">
+                                        <div class="flex items-center gap-3">
+                                            <input type="checkbox" @change="toggleAddon(addon)" class="w-5 h-5 rounded border-gray-600 bg-gray-700 text-brand-green focus:ring-brand-green">
+                                            <span class="text-gray-300 text-sm" x-text="addon.name"></span>
+                                        </div>
+                                        <span class="text-gray-400 text-xs" x-text="addon.price > 0 ? '+Rp ' + formatRupiah(addon.price) : 'Gratis'"></span>
+                                    </label>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <h4 class="font-bold text-white mb-2">Catatan Pesanan</h4>
+                            <textarea x-model="note" class="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-white focus:border-brand-green focus:ring-0 text-sm" placeholder="Contoh: Jangan pakai bawang goreng..."></textarea>
+                        </div>
+
+                        <div class="flex items-center justify-between bg-gray-900 p-4 rounded-xl border border-gray-700">
+                            <span class="font-bold text-white">Jumlah</span>
+                            <div class="flex items-center gap-4">
+                                <button @click="qty > 1 ? qty-- : null" class="w-8 h-8 rounded-full bg-gray-700 text-white flex items-center justify-center hover:bg-gray-600">-</button>
+                                <span class="font-bold text-xl text-white w-8 text-center" x-text="qty"></span>
+                                <button @click="qty++" class="w-8 h-8 rounded-full bg-brand-green text-black flex items-center justify-center hover:bg-green-500">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VIEW 3: CART DETAIL -->
+                    <div x-show="modalView === 'cart_detail'">
+                        <template x-if="cart.length === 0">
+                            <div class="text-center py-10">
+                                <div class="text-5xl mb-3">🛒</div>
+                                <p class="text-gray-400 font-bold">Keranjang Kosong</p>
+                                <p class="text-gray-600 text-sm mb-4">Lapar? Yuk cari makan dulu!</p>
+                                <button @click="showModal = false" class="text-brand-green font-bold border border-brand-green px-4 py-2 rounded-lg hover:bg-brand-green hover:text-black transition">Tutup</button>
+                            </div>
+                        </template>
+                        <div class="space-y-4">
+                            <template x-for="item in cart" :key="item.id">
+                                <div class="bg-gray-800/50 border border-gray-700 p-4 rounded-xl flex gap-4">
+                                    <img :src="item.img" class="w-16 h-16 rounded-lg object-cover bg-gray-700">
+                                    <div class="flex-1">
+                                        <h4 class="font-bold text-white" x-text="item.name"></h4>
+                                        <p class="text-gray-400 text-xs" x-text="item.qty + 'x @ Rp ' + formatRupiah(item.price)"></p>
+                                        <!-- Show Addons in Cart -->
+                                        <template x-if="item.addons && item.addons.length > 0">
+                                            <div class="mt-1 flex flex-wrap gap-1">
+                                                <template x-for="ad in item.addons">
+                                                    <span class="text-[10px] bg-gray-700 px-2 py-0.5 rounded text-gray-300" x-text="ad.name"></span>
+                                                </template>
+                                            </div>
+                                        </template>
+                                        <p x-show="item.note" class="text-xs text-yellow-500 mt-1 italic" x-text="'Note: ' + item.note"></p>
+                                    </div>
+                                    <div class="flex flex-col items-end justify-between">
+                                        <span class="font-bold text-brand-green" x-text="'Rp ' + formatRupiah(item.total)"></span>
+                                        <button @click="removeFromCart(item.id)" class="text-red-400 text-xs hover:underline">Hapus</button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- FOOTER MODAL (ACTIONS) -->
+                <div class="p-6 border-t border-gray-700 bg-[#0F172A]" x-show="modalView !== 'merchant_detail'">
+                    <!-- Tambah ke Keranjang -->
+                    <button x-show="modalView === 'menu_customization'" @click="addToCart()" class="w-full bg-brand-green hover:bg-green-500 text-black font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(46,204,113,0.3)] transition transform hover:scale-[1.02] flex justify-between px-6">
+                        <span>Tambah Pesanan</span>
+                        <span x-text="'Rp ' + formatRupiah(currentItemTotal)"></span>
+                    </button>
+                    <!-- Checkout -->
+                    <button x-show="modalView === 'cart_detail' && cart.length > 0" @click="processCheckout()" class="w-full bg-brand-green hover:bg-green-500 text-black font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(46,204,113,0.3)] transition transform hover:scale-[1.02] flex justify-between px-6">
+                        <span>Checkout Sekarang</span>
+                        <span x-text="'Total: Rp ' + formatRupiah(grandTotal)"></span>
+                    </button>
+                </div>
+
             </div>
-            @endforeach
         </div>
     </div>
-
-    <!-- BANNER AJAKAN -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-        <div class="relative rounded-[2.5rem] overflow-hidden bg-gradient-to-br from-brand-card to-gray-900 border border-white/5 shadow-2xl p-10 md:p-16 flex flex-col md:flex-row items-center justify-between gap-10">
-            <div class="max-w-2xl relative z-10">
-                <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-6">Punya Usaha Kuliner? <br><span class="text-brand-green">Gabung PasarNgalam!</span></h2>
-                <p class="text-gray-300 text-lg mb-8">Jangkau ribuan pelanggan baru dan kelola warungmu dengan dashboard canggih.</p>
-                <a href="{{ url('/mitra-login') }}" class="px-10 py-5 font-bold text-black bg-brand-green rounded-full hover:scale-105 transition shadow-[0_0_30px_rgba(0,224,115,0.3)]">Buka Warung Sekarang</a>
-            </div>
-        </div>
-    </div>
-
-    <!-- INCLUDE MODAL (WAJIB ADA) -->
-    @include('partials.user-modal')
 
 </body>
 </html>

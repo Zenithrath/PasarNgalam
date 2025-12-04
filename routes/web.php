@@ -1,52 +1,68 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MerchantController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\OrderController; 
 
 // --- HALAMAN PUBLIK ---
 Route::get('/', function () {
-    return view('welcome');
+    $merchants = \App\Models\User::where('role', 'merchant')
+        ->whereHas('products') // Hanya tampilkan merchant yang punya produk
+        ->with(['products' => function($query) {
+            $query->where('is_available', true);
+        }])
+        ->get();
+    return view('welcome', compact('merchants'));
 })->name('home');
 
-Route::middleware(['auth'])->group(function () {
-    Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
-});
-
-// --- AUTHENTICATION ---
+// --- AUTHENTICATION (Login, Register, Logout) ---
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.process');
 Route::post('/register', [AuthController::class, 'register'])->name('register.process');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 
-// --- MERCHANT AREA ---
-// Kita hanya cek login (auth) di sini. Cek Role dilakukan di Controller.
+// --- CUSTOMER CHECKOUT ---
+// 1. Halaman Form Checkout (INI YANG TADI ERROR)
+Route::get('/checkout', function () {
+    return view('checkout');
+})->name('checkout'); 
+
+// 2. Proses Checkout (Masuk ke OrderController)
+Route::post('/checkout-process', [OrderController::class, 'checkout'])->name('checkout.process');
+
+
+// --- MERCHANT AREA (Wajib Login sebagai Merchant) ---
 Route::middleware(['auth'])->group(function () {
+    
+    // Dashboard & Produk
     Route::get('/merchant/dashboard', [MerchantController::class, 'index'])->name('merchant.dashboard');
     Route::post('/merchant/product', [MerchantController::class, 'storeProduct'])->name('merchant.product.store');
     Route::put('/merchant/product/{id}', [MerchantController::class, 'updateProduct'])->name('merchant.product.update');
     Route::delete('/merchant/product/{id}', [MerchantController::class, 'deleteProduct'])->name('merchant.product.delete');
+
+    // Update Status Order (Masak / Siap)
+    Route::put('/merchant/order/{id}/update', [OrderController::class, 'updateStatus'])->name('merchant.order.update');
 });
 
 
-
-// --- DRIVER AREA ---
-// Kita hanya cek login (auth) di sini. Cek Role dilakukan di Controller.
+// --- DRIVER AREA (Wajib Login sebagai Driver) ---
 Route::middleware(['auth'])->group(function () {
+    
     Route::get('/driver/dashboard', [DriverController::class, 'index'])->name('driver.dashboard');
-    Route::post('/driver/order/{id}/take', [DriverController::class, 'takeOrder'])->name('driver.order.take');
-    Route::post('/driver/order/{id}/complete', [DriverController::class, 'completeOrder'])->name('driver.order.complete');
+    
+    // Fitur Driver
+    Route::post('/driver/update-location', [DriverController::class, 'updateLocation']); // GPS Tracker
+    Route::post('/driver/toggle-status', [DriverController::class, 'toggleStatus'])->name('driver.toggle'); // On/Off Bid
+    Route::post('/driver/order/{id}/complete', [DriverController::class, 'completeOrder'])->name('driver.order.complete'); // Selesaikan Order
 });
 
 
-// --- CUSTOMER CHECKOUT ---
-Route::get('/checkout', function () {
-    return view('checkout');
-})->name('checkout');
-
-Route::post('/checkout-process', function () {
-    return redirect('/')->with('success', 'Pesanan berhasil dibuat! Driver sedang mencarimu.');
-})->name('checkout.process');
+// --- GLOBAL PROFILE UPDATE (Bisa diakses Merchant & Driver) ---
+Route::middleware(['auth'])->group(function () {
+    Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+});

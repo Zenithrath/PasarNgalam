@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout - PasarNgalam</title>
-
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
 
@@ -128,18 +129,15 @@
     <div class="max-w-7xl mx-auto px-4 py-8">
 
         <!-- FORM UTAMA -->
-        <!-- Perubahan 1: Kita bungkus input dalam Form -->
         <form id="checkoutForm" action="{{ route('checkout.process') }}" method="POST" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             @csrf
-
-            <!-- Hidden Inputs (Untuk Kirim Data JS ke Laravel) -->
             <input type="hidden" name="cart_data" id="cart_json">
             <input type="hidden" name="total_amount" id="total_amount">
 
             <!-- LEFT COLUMN: FORM & PAYMENT -->
             <div class="lg:col-span-2 space-y-6">
 
-                <!-- 1. Alamat Pengiriman -->
+                <!-- Alamat Pengiriman -->
                 <div class="glass-panel p-6 rounded-2xl">
                     <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
                         <span class="bg-brand-green text-black w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">1</span>
@@ -148,23 +146,20 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Nama Penerima</label>
-                            <!-- Tambah name="" -->
                             <input type="text" name="customer_name" class="form-input" placeholder="Contoh: Budi Santoso" required>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Nomor WhatsApp</label>
-                            <!-- Tambah name="" -->
                             <input type="tel" name="customer_phone" class="form-input" placeholder="0812..." required>
                         </div>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Alamat Lengkap</label>
-                        <!-- Tambah name="" -->
                         <textarea name="delivery_address" rows="2" class="form-input" placeholder="Nama jalan, nomor rumah, patokan..." required></textarea>
                     </div>
                 </div>
 
-                <!-- 2. Metode Pembayaran -->
+                <!-- Metode Pembayaran -->
                 <div class="glass-panel p-6 rounded-2xl">
                     <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
                         <span class="bg-brand-green text-black w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">2</span>
@@ -175,7 +170,6 @@
 
                         <!-- QRIS -->
                         <label class="cursor-pointer relative">
-                            <!-- Tambah name="payment_method" -->
                             <input type="radio" name="payment_method" value="qris" x-model="paymentMethod" class="peer sr-only">
                             <div class="p-4 rounded-xl border border-gray-600 bg-gray-800/50 hover:bg-gray-800 peer-checked:border-brand-green peer-checked:bg-brand-green/10 transition flex items-center gap-4">
                                 <div class="w-12 h-12 bg-white rounded flex items-center justify-center p-1">
@@ -250,7 +244,7 @@
                     <div class="space-y-4 mb-6 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                         <template x-for="item in cart" :key="item.id">
                             <div class="flex gap-3">
-                                <div class="w-12 h-12 rounded bg-gray-800 overflow-hidden flex-shrink-0">
+                                <div class="w-12 h-12 rounded bg-gray-800 overflow-hidden shrink-0">
                                     <img :src="item.img" class="w-full h-full object-cover">
                                 </div>
                                 <div class="flex-1">
