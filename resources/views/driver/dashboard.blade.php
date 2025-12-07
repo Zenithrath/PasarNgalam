@@ -136,14 +136,14 @@
                     </a>
                     
                     @if($activeOrder->status == 'ready')
-                        <form action="{{ route('driver.order.accept', $activeOrder->id) }}" method="POST">
+                        <form action="{{ route('driver.order.accept', $activeOrder->id) }}" method="POST" onsubmit="return confirm('Konfirmasi\n\nPastikan Anda sudah di warung dan siap mengambil pesanan. Lanjutkan?')">
                             @csrf
                             <button type="submit" class="w-full bg-brand-green hover:bg-green-400 text-black font-bold py-4 rounded-xl shadow-lg transition transform hover:scale-[1.02]">
                                 Konfirmasi & Ambil Pesanan
                             </button>
                         </form>
                     @elseif($activeOrder->status == 'delivery')
-                        <form action="{{ route('driver.order.complete', $activeOrder->id) }}" method="POST">
+                        <form action="{{ route('driver.order.complete', $activeOrder->id) }}" method="POST" onsubmit="return confirm('Selesaikan Pengantaran? Pastikan barang sudah diterima pelanggan.')">
                             @csrf
                             <button type="submit" class="w-full bg-brand-green hover:bg-green-400 text-black font-bold py-4 rounded-xl shadow-lg transition transform hover:scale-[1.02]">
                                 Selesaikan Pengantaran

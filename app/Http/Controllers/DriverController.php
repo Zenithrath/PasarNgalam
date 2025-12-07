@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\User;
+use App\Models\OrderActivity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -75,9 +76,19 @@ class DriverController extends Controller
             return back()->with('error', 'Makanan belum siap. Konfirmasi hanya bisa dilakukan setelah merchant menandai sebagai siap.');
         }
 
-        // Update status to 'delivery' (driver mulai mengantar)
+        // Update status to 'delivery' (driver mulai mengantar) and set picked_at
         $order->status = 'delivery';
+        $order->picked_at = now();
         $order->save();
+
+        // Log activity (simple in-app notification)
+        OrderActivity::create([
+            'order_id' => $order->id,
+            'actor_type' => 'driver',
+            'actor_id' => Auth::id(),
+            'action' => 'picked_up',
+            'message' => 'Driver ' . Auth::user()->name . ' mengonfirmasi pengambilan pesanan pada ' . now()->toDateTimeString(),
+        ]);
 
         return back()->with('success', 'Konfirmasi diterima. Silakan ambil pesanan dari warung dan lanjutkan pengantaran.');
     }

@@ -245,7 +245,24 @@
                 <!-- VIEW 2: ORDERAN MASUK -->
                 <div x-show="activeTab === 'orders'" x-transition style="display: none;">
                     <div class="bg-brand-card border border-white/5 rounded-2xl p-6">
-                        <h2 class="text-2xl font-bold text-white mb-6">Pesanan Masuk</h2>
+                        <h2 class="text-2xl font-bold text-white mb-6">Rekap Keuangan & Pesanan</h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div class="bg-[#0B1120] p-4 rounded-xl border border-white/5">
+                                <p class="text-xs text-gray-400">Pendapatan Hari Ini</p>
+                                <p class="text-2xl font-bold text-brand-green">Rp {{ number_format($revenueToday ?? 0, 0, ',', '.') }}</p>
+                            </div>
+                            <div class="bg-[#0B1120] p-4 rounded-xl border border-white/5">
+                                <p class="text-xs text-gray-400">Pendapatan Bulan Ini</p>
+                                <p class="text-2xl font-bold text-white">Rp {{ number_format($revenueThisMonth ?? 0, 0, ',', '.') }}</p>
+                            </div>
+                            <div class="bg-[#0B1120] p-4 rounded-xl border border-white/5">
+                                <p class="text-xs text-gray-400">Total Pendapatan</p>
+                                <p class="text-2xl font-bold text-white">Rp {{ number_format($totalRevenue ?? 0, 0, ',', '.') }}</p>
+                            </div>
+                        </div>
+
+                        <h3 class="text-lg font-bold text-white mb-4">Pesanan Masuk</h3>
 
                         <div class="space-y-4">
                             @forelse($incomingOrders as $order)
@@ -287,6 +304,39 @@
                                 <h3 class="text-gray-400">Belum ada pesanan masuk.</h3>
                             </div>
                             @endforelse
+                        </div>
+                        
+                        <!-- Order History -->
+                        <div class="mt-8 border-t border-white/5 pt-6">
+                            <h3 class="text-lg font-bold text-white mb-4">Riwayat Pesanan Terbaru</h3>
+                            <div class="space-y-3">
+                                @forelse($orderHistory as $h)
+                                    <div class="bg-[#0B1120] p-4 rounded-xl border border-white/5 flex items-center justify-between">
+                                        <div>
+                                            <div class="text-sm text-gray-400">#ORD-{{ $h->id }} • {{ $h->created_at->format('d M Y H:i') }}</div>
+                                            <div class="font-bold text-white">Rp {{ number_format($h->total_price,0,',','.') }} • {{ $h->delivery_address }}</div>
+                                            <div class="text-xs text-gray-500">Pelanggan: {{ $h->customer->name ?? '-' }} • Driver: {{ $h->driver->name ?? '-' }}</div>
+                                        </div>
+                                        <div class="text-sm">
+                                            <span class="px-3 py-1 rounded text-xs font-bold {{ $h->status == 'completed' ? 'bg-green-500/20 text-brand-green' : 'bg-gray-700 text-gray-300' }}">{{ strtoupper($h->status) }}</span>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="text-gray-400">Belum ada riwayat pesanan.</div>
+                                @endforelse
+                            </div>
+
+                            <!-- Recent activities -->
+                            @if(!empty($recentActivities) && $recentActivities->count())
+                            <div class="mt-6">
+                                <h4 class="text-sm text-gray-400 mb-2">Aktivitas Terbaru</h4>
+                                <ul class="text-sm text-gray-300 space-y-2">
+                                    @foreach($recentActivities as $act)
+                                        <li class="bg-[#0B1120] p-3 rounded-lg border border-white/5">{{ $act->message }} <span class="text-xs text-gray-500">• {{ $act->created_at->diffForHumans() }}</span></li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                            @endif
                         </div>
                     </div>
                 </div>

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
-use App\Models\Order; 
+use App\Models\Order;
+use App\Models\OrderActivity;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -20,12 +22,41 @@ class MerchantController extends Controller
         $products = Product::where('merchant_id', $user->id)->latest()->get();
 
         $incomingOrders = Order::where('merchant_id', $user->id)
-                            ->whereIn('status', ['pending', 'cooking', 'ready'])
-                            ->with('driver')
-                            ->latest()
-                            ->get();
+                    ->whereIn('status', ['pending', 'cooking', 'ready'])
+                    ->with('driver')
+                    ->latest()
+                    ->get();
 
-        return view('merchant.dashboard', compact('user', 'products', 'incomingOrders'));
+        // Financial recap
+        $totalRevenue = Order::where('merchant_id', $user->id)
+                ->where('status', 'completed')
+                ->sum('total_price');
+
+        $revenueThisMonth = Order::where('merchant_id', $user->id)
+                    ->where('status', 'completed')
+                    ->whereMonth('created_at', Carbon::now()->month)
+                    ->sum('total_price');
+
+        $revenueToday = Order::where('merchant_id', $user->id)
+                    ->where('status', 'completed')
+                    ->whereDate('created_at', Carbon::today())
+                    ->sum('total_price');
+
+        // Order history (latest 50)
+        $orderHistory = Order::where('merchant_id', $user->id)
+                    ->with(['customer', 'driver'])
+                    ->latest()
+                    ->limit(50)
+                    ->get();
+
+        // Recent activities related to this merchant's orders
+        $merchantOrderIds = Order::where('merchant_id', $user->id)->pluck('id');
+        $recentActivities = OrderActivity::whereIn('order_id', $merchantOrderIds)
+                    ->latest()
+                    ->limit(20)
+                    ->get();
+
+        return view('merchant.dashboard', compact('user', 'products', 'incomingOrders', 'totalRevenue', 'revenueThisMonth', 'revenueToday', 'orderHistory', 'recentActivities'));
     }
 
     public function storeProduct(Request $request) {
