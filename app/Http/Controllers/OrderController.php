@@ -89,8 +89,11 @@ class OrderController extends Controller
     {
         $order = Order::with(['merchant', 'driver'])->findOrFail($id);
 
-        // Security: Pastikan customer yang login adalah pemilik order
-        if (Auth::id() !== $order->customer_id) {
+        // Security: Customer bisa akses order mereka sendiri
+        // Merchant bisa akses order dari resto mereka
+        // Driver bisa akses order yang di-assign ke mereka
+        $user = Auth::user();
+        if ($user->id !== $order->customer_id && $user->id !== $order->merchant_id && $user->id !== $order->driver_id) {
             return redirect('/')->with('error', 'Anda tidak memiliki akses ke pesanan ini.');
         }
 
@@ -99,7 +102,7 @@ class OrderController extends Controller
 
     public function getLocationData($id)
     {
-        $order = Order::with('driver')->findOrFail($id);
+        $order = Order::with(['driver', 'merchant'])->findOrFail($id);
 
         return response()->json([
             'order_id' => $order->id,
@@ -112,3 +115,4 @@ class OrderController extends Controller
             'status' => $order->status,
         ]);
     }
+}
