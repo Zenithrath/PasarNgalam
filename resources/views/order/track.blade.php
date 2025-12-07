@@ -120,14 +120,17 @@
     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            
+        let map;
+        let markerDriver, markerMerchant, markerCustomer;
+        let currentRoute;
+
+        function initMap() {
             // 1. DATA KOORDINAT
             // Lokasi Customer (Tujuan)
             var destLat = {{ $order->dest_latitude ?? -7.9826 }};
             var destLng = {{ $order->dest_longitude ?? 112.6308 }};
             
-            // Lokasi Merchant (Asal Makanan) - Fallback ke Alun-alun Malang jika merchant blm set lokasi
+            // Lokasi Merchant (Asal Makanan)
             var merchLat = {{ $order->merchant->latitude ?? -7.9826 }}; 
             var merchLng = {{ $order->merchant->longitude ?? 112.6308 }};
 
@@ -136,43 +139,20 @@
             var driverLng = {{ $order->driver->longitude ?? 0 }};
             var hasDriver = {{ $order->driver ? 'true' : 'false' }};
 
-            // 2. INIT MAP
-            var map = L.map('map').setView([destLat, destLng], 14);
+            // 2. INIT MAP (Jika belum ada)
+            if (!map) {
+                map = L.map('map').setView([destLat, destLng], 14);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap'
             }).addTo(map);
+            }
 
-            // 3. MARKER CUSTOMER (Tujuan)
-            var markerCustomer = L.marker([destLat, destLng], {
-                icon: L.icon({
-                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                    iconSize: [25, 41],
-                    iconAnchor: [12, 41],
-                    popupAnchor: [1, -34],
-                    shadowSize: [41, 41]
-                })
-            }).addTo(map);
-            markerCustomer.bindPopup('<b>📍 Lokasi Tujuan</b><br>Pesanan Anda').openPopup();
-
-            // 4. MARKER MERCHANT (Asal)
-            var markerMerchant = L.marker([merchLat, merchLng], {
-                icon: L.icon({
-                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                    iconSize: [25, 41],
-                    iconAnchor: [12, 41],
-                    popupAnchor: [1, -34],
-                    shadowSize: [41, 41]
-                })
-            }).addTo(map);
-            markerMerchant.bindPopup('<b>🏪 Warung</b><br>{{ $order->merchant->store_name ?? "Merchant" }}');
-
-            // 5. MARKER DRIVER (Jika ada)
-            if (hasDriver && (driverLat !== 0 || driverLng !== 0)) {
-                var markerDriver = L.marker([driverLat, driverLng], {
+            // 3. UPDATE ATAU CREATE MARKERS
+            // Marker Customer (Tujuan - Hijau)
+            if (!markerCustomer) {
+                markerCustomer = L.marker([destLat, destLng], {
                     icon: L.icon({
-                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
                         shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
                         iconSize: [25, 41],
                         iconAnchor: [12, 41],
@@ -180,40 +160,113 @@
                         shadowSize: [41, 41]
                     })
                 }).addTo(map);
-                markerDriver.bindPopup('<b>🛵 Driver</b><br>{{ $order->driver->name ?? "Driver" }}');
+                markerCustomer.bindPopup('<b>📦 Lokasi Tujuan</b><br>Pesanan Anda');
+            } else {
+                markerCustomer.setLatLng([destLat, destLng]);
             }
 
-            // 6. DRAW ROUTE (Merchant -> Driver -> Customer)
+            // Marker Merchant (Asal - Merah)
+            if (!markerMerchant) {
+                markerMerchant = L.marker([merchLat, merchLng], {
+                    icon: L.icon({
+                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                        iconSize: [25, 41],
+                        iconAnchor: [12, 41],
+                        popupAnchor: [1, -34],
+                        shadowSize: [41, 41]
+                    })
+                }).addTo(map);
+                markerMerchant.bindPopup('<b>🍽️ Warung</b><br>{{ $order->merchant->store_name ?? "Merchant" }}');
+            } else {
+                markerMerchant.setLatLng([merchLat, merchLng]);
+            }
+
+            // Marker Driver (Biru - Realtime)
+            if (hasDriver && (driverLat !== 0 || driverLng !== 0)) {
+                if (!markerDriver) {
+                    markerDriver = L.marker([driverLat, driverLng], {
+                        icon: L.icon({
+                            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+                            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                            iconSize: [25, 41],
+                            iconAnchor: [12, 41],
+                            popupAnchor: [1, -34],
+                            shadowSize: [41, 41]
+                        })
+                    }).addTo(map);
+                    markerDriver.bindPopup('<b>🛵 Driver</b><br>{{ $order->driver->name ?? "Driver" }}');
+                } else {
+                    markerDriver.setLatLng([driverLat, driverLng]);
+                }
+            }
+
+            // 4. DRAW ROUTE (Merchant -> Driver -> Customer ATAU Merchant -> Customer)
+            // Hapus route lama jika ada
+            if (currentRoute) {
+                map.removeControl(currentRoute);
+            }
+
             if (hasDriver && (driverLat !== 0 || driverLng !== 0)) {
                 // Route: Merchant -> Driver -> Customer
-                L.Routing.control({
+                currentRoute = L.Routing.control({
                     waypoints: [
                         L.latLng(merchLat, merchLng),  // Dari Merchant
                         L.latLng(driverLat, driverLng), // Ke Driver
                         L.latLng(destLat, destLng)      // Ke Customer
                     ],
-                    routeWhileDragging: true,
+                    routeWhileDragging: false,
                     show: false,
                     addWaypoints: false,
                     lineOptions: {
-                        styles: [{color: '#00E073', opacity: 0.8, weight: 4}]
+                        styles: [{color: '#00E073', opacity: 0.8, weight: 5}]
                     }
                 }).addTo(map);
             } else {
                 // Route: Merchant -> Customer (jika driver belum ditemukan)
-                L.Routing.control({
+                currentRoute = L.Routing.control({
                     waypoints: [
                         L.latLng(merchLat, merchLng),
                         L.latLng(destLat, destLng)
                     ],
-                    routeWhileDragging: true,
+                    routeWhileDragging: false,
                     show: false,
                     addWaypoints: false,
                     lineOptions: {
-                        styles: [{color: '#00E073', opacity: 0.8, weight: 4}]
+                        styles: [{color: '#00E073', opacity: 0.8, weight: 5}]
                     }
                 }).addTo(map);
             }
+
+            // 5. FIT BOUNDS (Zoom otomatis ke semua marker)
+            var bounds = L.latLngBounds([
+                [destLat, destLng],
+                [merchLat, merchLng]
+            ]);
+            if (hasDriver && (driverLat !== 0 || driverLng !== 0)) {
+                bounds.extend([driverLat, driverLng]);
+            }
+            map.fitBounds(bounds, {padding: [50, 50]});
+        }
+
+        // 6. INIT MAP SAAT PAGE LOAD
+        document.addEventListener("DOMContentLoaded", function() {
+            initMap();
+            
+            // AUTO REFRESH SETIAP 5 DETIK UNTUK UPDATE DRIVER LOCATION
+            setInterval(function() {
+                fetch('/api/order/{{ $order->id }}/location')
+                    .then(response => response.json())
+                    .then(data => {
+                        // Update driver marker jika ada perubahan lokasi
+                        if (markerDriver && data.driver_latitude !== null) {
+                            markerDriver.setLatLng([data.driver_latitude, data.driver_longitude]);
+                            // Re-draw route dengan lokasi driver terbaru
+                            initMap();
+                        }
+                    })
+                    .catch(err => console.log('Location update error:', err));
+            }, 5000);
         });
     </script>
 

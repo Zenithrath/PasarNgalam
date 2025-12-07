@@ -36,6 +36,9 @@ Route::post('/checkout-process', [OrderController::class, 'checkout'])->name('ch
 
 Route::get('/order/track/{id}', [OrderController::class, 'track'])->name('order.track');
 
+// API untuk realtime location tracking
+Route::get('/api/order/{id}/location', [OrderController::class, 'getLocationData']);
+
 // MERCHANT AREA (Wajib Login sebagai Merchant)
 Route::middleware(['auth'])->group(function () {
 

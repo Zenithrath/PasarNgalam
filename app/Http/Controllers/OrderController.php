@@ -96,4 +96,19 @@ class OrderController extends Controller
 
         return view('order.track', compact('order'));
     }
-}
+
+    public function getLocationData($id)
+    {
+        $order = Order::with('driver')->findOrFail($id);
+
+        return response()->json([
+            'order_id' => $order->id,
+            'dest_latitude' => $order->dest_latitude,
+            'dest_longitude' => $order->dest_longitude,
+            'driver_latitude' => $order->driver?->latitude,
+            'driver_longitude' => $order->driver?->longitude,
+            'merchant_latitude' => $order->merchant?->latitude,
+            'merchant_longitude' => $order->merchant?->longitude,
+            'status' => $order->status,
+        ]);
+    }
