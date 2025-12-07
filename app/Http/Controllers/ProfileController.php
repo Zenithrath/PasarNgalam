@@ -23,22 +23,29 @@ class ProfileController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        $request->validate([
+        $validationRules = [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,'.$user->id,
             'password' => 'nullable|min:6',
-            'store_name' => 'nullable|string',
             'phone' => 'required|string',
-            'vehicle_plate' => 'nullable|string',
             'address' => 'nullable|string',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'banner' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
+        ];
+
+        // Role-specific validation
+        if ($user->role === 'merchant') {
+            $validationRules['store_name'] = 'required|string|max:255';
+            $validationRules['banner'] = 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048';
+        } elseif ($user->role === 'driver') {
+            $validationRules['vehicle_plate'] = 'required|string|max:20';
+        }
+
+        $request->validate($validationRules);
 
         $user->name = $request->name;
         $user->email = $request->email;
         $user->phone = $request->phone;
-        $user->address = $request->address ?? $user->address;
+        $user->address = $request->address;
 
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
@@ -60,6 +67,7 @@ class ProfileController extends Controller
             $user->banner = $request->file('banner')->store('banners', 'public');
         }
 
+        // Role-specific updates
         if ($user->role === 'merchant') {
             $user->store_name = $request->store_name;
         } elseif ($user->role === 'driver') {

@@ -108,28 +108,40 @@
                 <!-- Basic Info -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-gray-400 text-xs uppercase font-bold mb-2">Nama Lengkap</label>
+                        <label class="block text-gray-400 text-xs uppercase font-bold mb-2">Nama Lengkap <span class="text-red-400">*</span></label>
                         <input type="text" name="name" value="{{ old('name', $user->name) }}" required
-                            class="w-full bg-[#0B1120] border border-gray-600 text-white text-sm rounded-lg focus:ring-1 focus:ring-brand-green focus:border-brand-green p-3">
+                            class="w-full bg-[#0B1120] border {{ $errors->has('name') ? 'border-red-500' : 'border-gray-600' }} text-white text-sm rounded-lg focus:ring-1 focus:ring-brand-green focus:border-brand-green p-3">
+                        @error('name')
+                            <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div>
-                        <label class="block text-gray-400 text-xs uppercase font-bold mb-2">Email</label>
+                        <label class="block text-gray-400 text-xs uppercase font-bold mb-2">Email <span class="text-red-400">*</span></label>
                         <input type="email" name="email" value="{{ old('email', $user->email) }}" required
-                            class="w-full bg-[#0B1120] border border-gray-600 text-white text-sm rounded-lg focus:ring-1 focus:ring-brand-green focus:border-brand-green p-3">
+                            class="w-full bg-[#0B1120] border {{ $errors->has('email') ? 'border-red-500' : 'border-gray-600' }} text-white text-sm rounded-lg focus:ring-1 focus:ring-brand-green focus:border-brand-green p-3">
+                        @error('email')
+                            <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
 
                 <!-- Contact Info -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-gray-400 text-xs uppercase font-bold mb-2">No. WhatsApp</label>
+                        <label class="block text-gray-400 text-xs uppercase font-bold mb-2">No. WhatsApp <span class="text-red-400">*</span></label>
                         <input type="tel" name="phone" value="{{ old('phone', $user->phone) }}" required
-                            class="w-full bg-[#0B1120] border border-gray-600 text-white text-sm rounded-lg focus:ring-1 focus:ring-brand-green focus:border-brand-green p-3">
+                            class="w-full bg-[#0B1120] border {{ $errors->has('phone') ? 'border-red-500' : 'border-gray-600' }} text-white text-sm rounded-lg focus:ring-1 focus:ring-brand-green focus:border-brand-green p-3">
+                        @error('phone')
+                            <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div>
                         <label class="block text-gray-400 text-xs uppercase font-bold mb-2">Password Baru (Opsional)</label>
                         <input type="password" name="password" placeholder="Isi untuk ganti password"
-                            class="w-full bg-[#0B1120] border border-gray-600 text-white text-sm rounded-lg focus:ring-1 focus:ring-brand-green focus:border-brand-green p-3">
+                            class="w-full bg-[#0B1120] border {{ $errors->has('password') ? 'border-red-500' : 'border-gray-600' }} text-white text-sm rounded-lg focus:ring-1 focus:ring-brand-green focus:border-brand-green p-3">
+                        @error('password')
+                            <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
 
@@ -137,7 +149,10 @@
                 <div>
                     <label class="block text-gray-400 text-xs uppercase font-bold mb-2">Alamat Lengkap</label>
                     <textarea name="address" rows="3"
-                        class="w-full bg-[#0B1120] border border-gray-600 text-white text-sm rounded-lg focus:ring-1 focus:ring-brand-green focus:border-brand-green p-3 resize-none">{{ old('address', $user->address) }}</textarea>
+                        class="w-full bg-[#0B1120] border {{ $errors->has('address') ? 'border-red-500' : 'border-gray-600' }} text-white text-sm rounded-lg focus:ring-1 focus:ring-brand-green focus:border-brand-green p-3 resize-none">{{ old('address', $user->address) }}</textarea>
+                    @error('address')
+                        <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <!-- Save Button -->

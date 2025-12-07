@@ -202,18 +202,60 @@
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><label class="block text-gray-400 text-xs font-bold uppercase mb-1">Nama</label><input type="text" name="name" value="{{ $user->name }}" class="w-full bg-[#0B1120] border border-gray-600 rounded-xl p-3 text-white focus:outline-none focus:border-brand-green"></div>
-                        <div><label class="block text-gray-400 text-xs font-bold uppercase mb-1">No. HP</label><input type="text" name="phone" value="{{ $user->phone }}" class="w-full bg-[#0B1120] border border-gray-600 rounded-xl p-3 text-white focus:outline-none"></div>
+                        <div>
+                            <label class="block text-gray-400 text-xs font-bold uppercase mb-1">Nama <span class="text-red-400">*</span></label>
+                            <input type="text" name="name" value="{{ old('name', $user->name) }}" required
+                                class="w-full bg-[#0B1120] border {{ $errors->has('name') ? 'border-red-500' : 'border-gray-600' }} rounded-xl p-3 text-white focus:outline-none focus:border-brand-green">
+                            @error('name')
+                                <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block text-gray-400 text-xs font-bold uppercase mb-1">No. HP <span class="text-red-400">*</span></label>
+                            <input type="text" name="phone" value="{{ old('phone', $user->phone) }}" required
+                                class="w-full bg-[#0B1120] border {{ $errors->has('phone') ? 'border-red-500' : 'border-gray-600' }} rounded-xl p-3 text-white focus:outline-none">
+                            @error('phone')
+                                <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><label class="block text-brand-green text-xs font-bold uppercase mb-1">Plat Nomor</label><input type="text" name="vehicle_plate" value="{{ $user->vehicle_plate }}" class="w-full bg-[#0B1120] border border-brand-green/50 rounded-xl p-3 text-white focus:outline-none"></div>
-                        <div><label class="block text-gray-400 text-xs font-bold uppercase mb-1">Email</label><input type="email" name="email" value="{{ $user->email }}" class="w-full bg-[#0B1120] border border-gray-600 rounded-xl p-3 text-white focus:outline-none"></div>
+                        <div>
+                            <label class="block text-brand-green text-xs font-bold uppercase mb-1">Plat Nomor <span class="text-red-400">*</span></label>
+                            <input type="text" name="vehicle_plate" value="{{ old('vehicle_plate', $user->vehicle_plate) }}" required
+                                class="w-full bg-[#0B1120] border {{ $errors->has('vehicle_plate') ? 'border-red-500' : 'border-brand-green/50' }} rounded-xl p-3 text-white focus:outline-none">
+                            @error('vehicle_plate')
+                                <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="block text-gray-400 text-xs font-bold uppercase mb-1">Email <span class="text-red-400">*</span></label>
+                            <input type="email" name="email" value="{{ old('email', $user->email) }}" required
+                                class="w-full bg-[#0B1120] border {{ $errors->has('email') ? 'border-red-500' : 'border-gray-600' }} rounded-xl p-3 text-white focus:outline-none">
+                            @error('email')
+                                <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
                     </div>
 
-                    <div><label class="block text-gray-400 text-xs font-bold uppercase mb-1">Alamat</label><textarea name="address" rows="2" class="w-full bg-[#0B1120] border border-gray-600 rounded-xl p-3 text-white focus:outline-none resize-none">{{ $user->address }}</textarea></div>
+                    <div>
+                        <label class="block text-gray-400 text-xs font-bold uppercase mb-1">Alamat</label>
+                        <textarea name="address" rows="2" 
+                            class="w-full bg-[#0B1120] border {{ $errors->has('address') ? 'border-red-500' : 'border-gray-600' }} rounded-xl p-3 text-white focus:outline-none resize-none">{{ old('address', $user->address) }}</textarea>
+                        @error('address')
+                            <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
                     
-                    <div><label class="block text-gray-400 text-xs font-bold uppercase mb-1">Password Baru (Opsional)</label><input type="password" name="password" placeholder="Isi untuk ganti" class="w-full bg-[#0B1120] border border-gray-600 rounded-xl p-3 text-white focus:outline-none"></div>
+                    <div>
+                        <label class="block text-gray-400 text-xs font-bold uppercase mb-1">Password Baru (Opsional)</label>
+                        <input type="password" name="password" placeholder="Isi untuk ganti" 
+                            class="w-full bg-[#0B1120] border {{ $errors->has('password') ? 'border-red-500' : 'border-gray-600' }} rounded-xl p-3 text-white focus:outline-none">
+                        @error('password')
+                            <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
 
                     <button type="submit" class="w-full bg-brand-green hover:bg-green-400 text-black font-bold py-3.5 rounded-xl shadow-lg mt-2 transition transform hover:scale-[1.02]">Simpan Profil</button>
                 </form>

@@ -1,5 +1,13 @@
 <div x-show="activeTab === 'profile'" x-transition.opacity.duration.300ms class="space-y-6">
                     
+    <!-- NOTIF SUCCESS -->
+    @if(session('success'))
+    <div class="bg-[#00E073]/10 border border-[#00E073]/30 text-[#00E073] px-6 py-4 rounded-2xl text-sm font-semibold flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        {{ session('success') }}
+    </div>
+    @endif
+                    
     <!-- STATISTIK (DINAMIS DARI DATABASE) -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         
@@ -86,24 +94,36 @@
                 <div class="md:col-span-2 grid gap-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-gray-400 text-xs uppercase font-bold mb-2">Nama Pemilik</label>
-                            <input type="text" name="name" value="{{ old('name', $user->name) }}" 
-                                class="bg-[#0B1120] border border-[#334155] text-white text-sm rounded-lg focus:ring-1 focus:ring-[#00E073] focus:border-[#00E073] block w-full p-3">
+                            <label class="block text-gray-400 text-xs uppercase font-bold mb-2">Nama Pemilik <span class="text-red-400">*</span></label>
+                            <input type="text" name="name" value="{{ old('name', $user->name) }}" required
+                                class="bg-[#0B1120] border {{ $errors->has('name') ? 'border-red-500' : 'border-[#334155]' }} text-white text-sm rounded-lg focus:ring-1 focus:ring-[#00E073] focus:border-[#00E073] block w-full p-3">
+                            @error('name')
+                                <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
                         <div>
-                            <label class="block text-gray-400 text-xs uppercase font-bold mb-2">Email Login</label>
-                            <input type="email" name="email" value="{{ old('email', $user->email) }}" 
-                                class="bg-[#0B1120] border border-[#334155] text-white text-sm rounded-lg focus:ring-1 focus:ring-[#00E073] focus:border-[#00E073] block w-full p-3">
+                            <label class="block text-gray-400 text-xs uppercase font-bold mb-2">Email Login <span class="text-red-400">*</span></label>
+                            <input type="email" name="email" value="{{ old('email', $user->email) }}" required
+                                class="bg-[#0B1120] border {{ $errors->has('email') ? 'border-red-500' : 'border-[#334155]' }} text-white text-sm rounded-lg focus:ring-1 focus:ring-[#00E073] focus:border-[#00E073] block w-full p-3">
+                            @error('email')
+                                <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
                         <div>
-                            <label class="block text-[#00E073] text-xs uppercase font-bold mb-2">Nama Warung</label>
-                            <input type="text" name="store_name" value="{{ old('store_name', $user->store_name) }}" 
-                                class="bg-[#0B1120] border border-[#00E073]/50 text-white text-sm rounded-lg focus:ring-1 focus:ring-[#00E073] focus:border-[#00E073] block w-full p-3">
+                            <label class="block text-[#00E073] text-xs uppercase font-bold mb-2">Nama Warung <span class="text-red-400">*</span></label>
+                            <input type="text" name="store_name" value="{{ old('store_name', $user->store_name) }}" required
+                                class="bg-[#0B1120] border {{ $errors->has('store_name') ? 'border-red-500' : 'border-[#00E073]/50' }} text-white text-sm rounded-lg focus:ring-1 focus:ring-[#00E073] focus:border-[#00E073] block w-full p-3">
+                            @error('store_name')
+                                <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
                         <div>
-                            <label class="block text-gray-400 text-xs uppercase font-bold mb-2">WhatsApp</label>
-                            <input type="text" name="phone" value="{{ old('phone', $user->phone) }}" 
-                                class="bg-[#0B1120] border border-[#334155] text-white text-sm rounded-lg focus:ring-1 focus:ring-[#00E073] focus:border-[#00E073] block w-full p-3">
+                            <label class="block text-gray-400 text-xs uppercase font-bold mb-2">WhatsApp <span class="text-red-400">*</span></label>
+                            <input type="text" name="phone" value="{{ old('phone', $user->phone) }}" required
+                                class="bg-[#0B1120] border {{ $errors->has('phone') ? 'border-red-500' : 'border-[#334155]' }} text-white text-sm rounded-lg focus:ring-1 focus:ring-[#00E073] focus:border-[#00E073] block w-full p-3">
+                            @error('phone')
+                                <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
                 </div>
