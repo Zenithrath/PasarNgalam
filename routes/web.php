@@ -42,12 +42,40 @@ Route::get('/api/order/{id}/location', [OrderController::class, 'getLocationData
 // MERCHANT AREA (Wajib Login sebagai Merchant)
 Route::middleware(['auth'])->group(function () {
 
-    Route::get('/merchant/dashboard', [MerchantController::class, 'index'])->name('merchant.dashboard');
-    Route::post('/merchant/product', [MerchantController::class, 'storeProduct'])->name('merchant.product.store');
-    Route::put('/merchant/product/{id}', [MerchantController::class, 'updateProduct'])->name('merchant.product.update');
-    Route::delete('/merchant/product/{id}', [MerchantController::class, 'deleteProduct'])->name('merchant.product.delete');
+    Route::get('/merchant/dashboard', function () {
+        if (!Auth::check() || Auth::user()->role !== 'merchant') {
+            return redirect('/')->with('error', 'Akses ditolak.');
+        }
+        return app(\App\Http\Controllers\MerchantController::class)->index();
+    })->name('merchant.dashboard');
 
-    Route::put('/merchant/order/{id}/update', [OrderController::class, 'updateStatus'])->name('merchant.order.update');
+    Route::post('/merchant/product', function (\Illuminate\Http\Request $request) {
+        if (!Auth::check() || Auth::user()->role !== 'merchant') {
+            return redirect('/')->with('error', 'Akses ditolak.');
+        }
+        return app(\App\Http\Controllers\MerchantController::class)->storeProduct($request);
+    })->name('merchant.product.store');
+
+    Route::put('/merchant/product/{id}', function (\Illuminate\Http\Request $request, $id) {
+        if (!Auth::check() || Auth::user()->role !== 'merchant') {
+            return redirect('/')->with('error', 'Akses ditolak.');
+        }
+        return app(\App\Http\Controllers\MerchantController::class)->updateProduct($request, $id);
+    })->name('merchant.product.update');
+
+    Route::delete('/merchant/product/{id}', function ($id) {
+        if (!Auth::check() || Auth::user()->role !== 'merchant') {
+            return redirect('/')->with('error', 'Akses ditolak.');
+        }
+        return app(\App\Http\Controllers\MerchantController::class)->deleteProduct($id);
+    })->name('merchant.product.delete');
+
+    Route::put('/merchant/order/{id}/update', function (\Illuminate\Http\Request $request, $id) {
+        if (!Auth::check() || Auth::user()->role !== 'merchant') {
+            return redirect('/')->with('error', 'Akses ditolak.');
+        }
+        return app(\App\Http\Controllers\OrderController::class)->updateStatus($request, $id);
+    })->name('merchant.order.update');
 });
 
 
