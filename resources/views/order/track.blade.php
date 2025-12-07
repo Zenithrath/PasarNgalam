@@ -137,7 +137,7 @@
             // Lokasi Driver (Realtime)
             var driverLat = {{ $order->driver->latitude ?? 0 }};
             var driverLng = {{ $order->driver->longitude ?? 0 }};
-            var hasDriver = {{ $order->driver ? 'true' : 'false' }};
+            var hasDriver = {{ $order->driver ? 'true' : 'false' }} === 'true';
 
             // 2. INIT MAP (Jika belum ada)
             if (!map) {
@@ -183,7 +183,7 @@
             }
 
             // Marker Driver (Biru - Realtime)
-            if (hasDriver && (driverLat !== 0 || driverLng !== 0)) {
+            if (hasDriver && driverLat !== 0 && driverLng !== 0) {
                 if (!markerDriver) {
                     markerDriver = L.marker([driverLat, driverLng], {
                         icon: L.icon({
@@ -199,6 +199,10 @@
                 } else {
                     markerDriver.setLatLng([driverLat, driverLng]);
                 }
+            } else if (markerDriver) {
+                // Remove driver marker jika driver tidak ada atau koordinat 0,0
+                map.removeLayer(markerDriver);
+                markerDriver = null;
             }
 
             // 4. DRAW ROUTE (Merchant -> Driver -> Customer ATAU Merchant -> Customer)
@@ -207,7 +211,7 @@
                 map.removeControl(currentRoute);
             }
 
-            if (hasDriver && (driverLat !== 0 || driverLng !== 0)) {
+            if (hasDriver && driverLat !== 0 && driverLng !== 0) {
                 // Route: Merchant -> Driver -> Customer
                 currentRoute = L.Routing.control({
                     waypoints: [
@@ -239,14 +243,15 @@
             }
 
             // 5. FIT BOUNDS (Zoom otomatis ke semua marker)
-            var bounds = L.latLngBounds([
+            var boundsArray = [
                 [destLat, destLng],
                 [merchLat, merchLng]
-            ]);
-            if (hasDriver && (driverLat !== 0 || driverLng !== 0)) {
-                bounds.extend([driverLat, driverLng]);
+            ];
+            if (hasDriver && driverLat !== 0 && driverLng !== 0) {
+                boundsArray.push([driverLat, driverLng]);
             }
-            map.fitBounds(bounds, {padding: [50, 50]});
+            var bounds = L.latLngBounds(boundsArray);
+            map.fitBounds(bounds, {padding: [100, 100]});
         }
 
         // 6. INIT MAP SAAT PAGE LOAD
@@ -258,9 +263,15 @@
                 fetch('/api/order/{{ $order->id }}/location')
                     .then(response => response.json())
                     .then(data => {
-                        // Update driver marker jika ada perubahan lokasi
-                        if (markerDriver && data.driver_latitude !== null) {
-                            markerDriver.setLatLng([data.driver_latitude, data.driver_longitude]);
+                        // Update marker dan route jika ada perubahan
+                        if (data.driver_latitude !== null && data.driver_latitude !== 0) {
+                            var newDriverLat = data.driver_latitude;
+                            var newDriverLng = data.driver_longitude;
+                            
+                            // Update atau create driver marker
+                            if (markerDriver) {
+                                markerDriver.setLatLng([newDriverLat, newDriverLng]);
+                            }
                             // Re-draw route dengan lokasi driver terbaru
                             initMap();
                         }
