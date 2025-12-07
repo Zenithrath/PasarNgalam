@@ -313,7 +313,7 @@
     <script>
         // 1. Inisialisasi Peta
         // Default: Alun-alun Malang (Hanya untuk tampilan awal)
-        var map = L.map('map').setView([-7.9826, 112.6308], 15);
+        var map = L.map('map-register').setView([-7.9826, 112.6308], 15);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap'
