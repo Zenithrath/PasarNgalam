@@ -135,12 +135,23 @@
                         <span>🗺️</span> Buka Google Maps
                     </a>
                     
-                    <form action="{{ route('driver.order.complete', $activeOrder->id) }}" method="POST">
-                        @csrf
-                        <button type="submit" class="w-full bg-brand-green hover:bg-green-400 text-black font-bold py-4 rounded-xl shadow-lg transition transform hover:scale-[1.02]">
-                            Selesaikan Pengantaran
-                        </button>
-                    </form>
+                    @if($activeOrder->status == 'ready')
+                        <form action="{{ route('driver.order.accept', $activeOrder->id) }}" method="POST">
+                            @csrf
+                            <button type="submit" class="w-full bg-brand-green hover:bg-green-400 text-black font-bold py-4 rounded-xl shadow-lg transition transform hover:scale-[1.02]">
+                                Konfirmasi & Ambil Pesanan
+                            </button>
+                        </form>
+                    @elseif($activeOrder->status == 'delivery')
+                        <form action="{{ route('driver.order.complete', $activeOrder->id) }}" method="POST">
+                            @csrf
+                            <button type="submit" class="w-full bg-brand-green hover:bg-green-400 text-black font-bold py-4 rounded-xl shadow-lg transition transform hover:scale-[1.02]">
+                                Selesaikan Pengantaran
+                            </button>
+                        </form>
+                    @else
+                        <div class="text-center text-sm text-gray-400">Status pesanan: <span class="font-bold">{{ strtoupper($activeOrder->status) }}</span></div>
+                    @endif
                 </div>
             </div>
 

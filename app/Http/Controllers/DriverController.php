@@ -58,4 +58,27 @@ class DriverController extends Controller
         }
         return back()->with('success', 'Selesai! Menunggu order berikutnya...');
     }
+
+    /**
+     * Driver confirms pickup / that food is ready and starts delivery.
+     * Only the assigned driver can confirm, and order must be in 'ready' status.
+     */
+    public function acceptOrder($id)
+    {
+        $order = Order::where('id', $id)->where('driver_id', Auth::id())->first();
+        if (!$order) {
+            return back()->with('error', 'Order tidak ditemukan atau bukan tugas Anda.');
+        }
+
+        // Only allow acceptance if merchant has marked the order as 'ready'
+        if ($order->status !== 'ready') {
+            return back()->with('error', 'Makanan belum siap. Konfirmasi hanya bisa dilakukan setelah merchant menandai sebagai siap.');
+        }
+
+        // Update status to 'delivery' (driver mulai mengantar)
+        $order->status = 'delivery';
+        $order->save();
+
+        return back()->with('success', 'Konfirmasi diterima. Silakan ambil pesanan dari warung dan lanjutkan pengantaran.');
+    }
 }

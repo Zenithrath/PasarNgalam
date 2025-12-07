@@ -58,6 +58,7 @@ Route::middleware(['auth'])->group(function () {
     
     // Fitur Driver
     Route::post('/driver/update-location', [DriverController::class, 'updateLocation']); // GPS Tracker
+    Route::post('/driver/order/{id}/accept', [DriverController::class, 'acceptOrder'])->name('driver.order.accept'); // Driver konfirmasi makanan siap / ambil
     Route::post('/driver/toggle-status', [DriverController::class, 'toggleStatus'])->name('driver.toggle'); // On/Off Bid
     Route::post('/driver/order/{id}/complete', [DriverController::class, 'completeOrder'])->name('driver.order.complete'); // Selesaikan Order
 });
