@@ -7,18 +7,19 @@ use App\Http\Controllers\MerchantController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\OrderController; 
+use App\Models\User; // Import Model User
 
-// --- HALAMAN PUBLIK ---
+// --- HALAMAN UTAMA (USER DASHBOARD) ---
 Route::get('/', function () {
-    // Menampilkan Merchant yang punya produk aktif
-    $merchants = \App\Models\User::where('role', 'merchant')
-        ->whereHas('products') 
-        ->with(['products' => function($query) {
-            $query->where('is_available', true);
-        }])
+    // Menampilkan Merchant yang aktif
+    $merchants = User::where('role', 'merchant')
+        ->where('is_active', true)
+        ->whereHas('products') // Hanya yang punya produk
         ->get();
-    return view('welcome', compact('merchants'));
+        
+    return view('user.dashboard', compact('merchants'));
 })->name('home');
+
 
 // --- AUTHENTICATION ---
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -26,36 +27,45 @@ Route::post('/login', [AuthController::class, 'login'])->name('login.process');
 Route::post('/register', [AuthController::class, 'register'])->name('register.process');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// --- CUSTOMER ORDER FLOW ---
-Route::get('/checkout', function () { return view('checkout'); })->name('checkout'); 
-Route::post('/checkout-process', [OrderController::class, 'checkout'])->name('checkout.process');
 
-// Payment & Tracking
-Route::get('/order/{id}/payment', [OrderController::class, 'payment'])->name('order.payment');
-Route::post('/order/{id}/confirm-payment', [OrderController::class, 'confirmPayment'])->name('order.confirmPayment');
-Route::get('/order/track/{id}', [OrderController::class, 'track'])->name('order.track');
+// --- CUSTOMER ORDER FLOW (CHECKOUT & TRACKING) ---
+Route::middleware(['auth'])->group(function () {
+    
+    // 1. Halaman Checkout
+    Route::get('/checkout', [OrderController::class, 'indexCheckout'])->name('checkout'); 
+    
+    // 2. Proses Submit Order
+    Route::post('/checkout/process', [OrderController::class, 'processCheckout'])->name('checkout.process');
 
-// API Public (Untuk Tracking Map di halaman Customer)
+    // 3. Halaman Pembayaran
+    Route::get('/order/payment/{id}', [OrderController::class, 'showPayment'])->name('order.payment');
+    Route::post('/order/payment/{id}/confirm', [OrderController::class, 'confirmPayment'])->name('order.confirmPayment');
+    
+    // 4. Halaman Tracking
+    Route::get('/order/track/{id}', [OrderController::class, 'trackOrder'])->name('order.track');
+
+    // 5. Submit Review Setelah Order Selesai
+    Route::post('/order/{id}/review', [OrderController::class, 'submitReview'])->name('order.review');
+
+});
+
+// API Public (Untuk Map Tracking Realtime - Jika diperlukan tanpa auth)
 Route::get('/api/order/{id}/location', [OrderController::class, 'getLocationData']);
 
 
 // --- MERCHANT AREA ---
-// Menggunakan middleware auth. Pengecekan role 'merchant' dilakukan di dalam Controller
 Route::middleware(['auth'])->group(function () {
-
     Route::get('/merchant/dashboard', [MerchantController::class, 'index'])->name('merchant.dashboard');
 
-    // === [PENTING] ROUTE API REALTIME NOTIFIKASI ===
-    // Route ini wajib ada agar fitur suara & auto-reload berfungsi
+    // API Notifikasi Realtime Merchant
     Route::get('/merchant/orders/api', [MerchantController::class, 'getPendingOrdersApi'])->name('merchant.orders.api');
 
-    // CRUD Produk
+    // Manajemen Produk
     Route::post('/merchant/product', [MerchantController::class, 'storeProduct'])->name('merchant.product.store');
     Route::put('/merchant/product/{id}', [MerchantController::class, 'updateProduct'])->name('merchant.product.update');
     Route::delete('/merchant/product/{id}', [MerchantController::class, 'deleteProduct'])->name('merchant.product.delete');
 
     // Update Status Order (Terima/Masak/Selesai)
-    // Note: Ini mengarah ke OrderController karena logika update status ada di sana, tapi diakses merchant
     Route::put('/merchant/order/{id}/update', [OrderController::class, 'updateStatus'])->name('merchant.order.update');
 });
 
@@ -64,10 +74,12 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/driver/dashboard', [DriverController::class, 'index'])->name('driver.dashboard');
     
-    // Fitur Operasional Driver
+    // Operasional Driver
     Route::post('/driver/update-location', [DriverController::class, 'updateLocation']); 
-    Route::post('/driver/order/{id}/accept', [DriverController::class, 'acceptOrder'])->name('driver.order.accept'); 
     Route::post('/driver/toggle-status', [DriverController::class, 'toggleStatus'])->name('driver.toggle'); 
+    
+    // Order Action (Terima & Selesai)
+    Route::post('/driver/order/{id}/accept', [DriverController::class, 'acceptOrder'])->name('driver.order.accept'); 
     Route::post('/driver/order/{id}/complete', [DriverController::class, 'completeOrder'])->name('driver.order.complete'); 
 });
 
@@ -77,35 +89,3 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 });
-
-
-// --- DEV HELPERS (Untuk Testing Localhost) ---
-// Hanya aktif jika environment local atau debug mode on
-if (app()->environment('local') || config('app.debug')) {
-    
-    Route::get('/dev/create-test-order', function () {
-        $merchant = \App\Models\User::where('role', 'merchant')->first();
-        $driver = \App\Models\User::where('role', 'driver')->first();
-        $customer = \App\Models\User::where('role', 'user')->first();
-
-        if (!$merchant || !$driver || !$customer) return 'Pastikan User, Merchant, dan Driver sudah ada di database.';
-
-        $order = \App\Models\Order::create([
-            'customer_id' => $customer->id,
-            'merchant_id' => $merchant->id,
-            'driver_id' => $driver->id,
-            'delivery_address' => 'Test Address Dev',
-            'dest_latitude' => -7.9826,
-            'dest_longitude' => 112.6308,
-            'total_price' => 15000,
-            'delivery_fee' => 7000,
-            'status' => 'pending',
-            'payment_status' => 'paid',
-            'payment_method' => 'cod',
-            'payment_code' => 'DEVTEST',
-            'items' => []
-        ]);
-
-        return redirect()->route('order.track', $order->id);
-    });
-}

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\User;
+use App\Models\Review; // Pastikan Model Review di-import
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -11,11 +12,10 @@ class OrderController extends Controller
 {
     /**
      * Helper Function: Hitung Jarak (Haversine Formula)
-     * Menghitung jarak antara dua titik koordinat dalam Kilometer
      */
     private function calculateDistance($lat1, $lon1, $lat2, $lon2)
     {
-        $earthRadius = 6371; // Radius bumi dalam km
+        $earthRadius = 6371; // km
 
         $dLat = deg2rad($lat2 - $lat1);
         $dLon = deg2rad($lon2 - $lon1);
@@ -26,12 +26,22 @@ class OrderController extends Controller
 
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 
-        return $earthRadius * $c; // Hasil dalam Kilometer
+        return $earthRadius * $c;
     }
 
-    public function checkout(Request $request)
+    /**
+     * 1. Halaman Checkout
+     */
+    public function indexCheckout()
     {
-        // 1. Validasi Input
+        return view('user.checkout.index');
+    }
+
+    /**
+     * 2. Proses Checkout (Simpan ke DB)
+     */
+    public function processCheckout(Request $request)
+    {
         $request->validate([
             'cart_data' => 'required',
             'delivery_address' => 'required',
@@ -43,21 +53,18 @@ class OrderController extends Controller
             'lng_input' => 'nullable|numeric',
         ]);
 
-        // Decode JSON dari Frontend menjadi Array PHP
         $cart = json_decode($request->cart_data, true);
 
-        // 2. Merchant ID Logic
+        // Merchant Logic
         if (isset($cart[0]['merchant_id'])) {
             $merchantId = $cart[0]['merchant_id'];
         } else {
             $randomMerchant = User::where('role', 'merchant')->first();
             $merchantId = $randomMerchant ? $randomMerchant->id : 1;
         }
-
-        // Ambil Data Merchant (Penting untuk koordinat awal)
         $merchant = User::find($merchantId);
 
-        // 3. Koordinat Logic (Lokasi Customer)
+        // Koordinat Logic
         $lat = $request->input('latitude');
         $lng = $request->input('longitude');
         if (empty($lat) || empty($lng)) {
@@ -66,26 +73,20 @@ class OrderController extends Controller
         }
 
         if ($lat === null || $lng === null) {
-            return back()->with('error', 'Koordinat pengiriman tidak ditemukan. Pastikan Anda memilih lokasi pada peta.');
+            return back()->with('error', 'Koordinat pengiriman tidak ditemukan.');
         }
 
-        // --- 4. LOGIKA HITUNG ONGKIR DINAMIS ---
-        $deliveryFee = 7000; // Harga Default (0 - 5 KM)
-        
+        // Ongkir Logic
+        $deliveryFee = 7000; 
         if ($merchant && $merchant->latitude && $merchant->longitude) {
-            // Hitung jarak Merchant ke Customer
             $distance = $this->calculateDistance($merchant->latitude, $merchant->longitude, $lat, $lng);
-            
-            // Jika jarak di atas 5 KM
             if ($distance > 5) {
-                // Hitung kelebihan jarak (dibulatkan ke atas, misal 5.1 km dianggap lebih 1 km)
                 $extraKm = ceil($distance - 5);
                 $deliveryFee = 7000 + ($extraKm * 1000);
             }
         }
-        // -------------------------------------
 
-        // 5. Cari Driver Terdekat (Rumus Haversine SQL)
+        // Driver Assignment (Nearest < 50km)
         $assignedDriver = User::select("users.*")
             ->selectRaw("(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) AS distance", [$lat, $lng, $lat])
             ->where('role', 'driver')
@@ -94,14 +95,8 @@ class OrderController extends Controller
             ->orderBy('distance', 'asc')
             ->first();
 
-        // Fallback jika tidak ada driver
-        if (!$assignedDriver) {
-             $assignedDriver = null; 
-        }
-
-        // 6. Create Order Header
+        // Create Order
         $paymentCode = 'PAY' . strtoupper(uniqid());
-
         $order = Order::create([
             'customer_id' => Auth::id() ?? 1,
             'merchant_id' => $merchantId,
@@ -110,33 +105,124 @@ class OrderController extends Controller
             'dest_latitude' => $lat,
             'dest_longitude' => $lng,
             'total_price' => $request->total_amount,
-            
-            'delivery_fee' => $deliveryFee, // Gunakan hasil perhitungan dinamis
-            
+            'delivery_fee' => $deliveryFee,
             'status' => 'pending',
             'payment_method' => $request->payment_method,
             'payment_status' => 'pending',  
             'payment_code' => $paymentCode,
-            'items' => $cart // Simpan data keranjang (Array otomatis jadi JSON di DB)
+            'items' => $cart 
         ]);
 
-        // 7. Redirect Logic
         if ($request->payment_method === 'cod') {
-            $order->update(['payment_status' => 'paid']); // Anggap lunas kalau COD (untuk flow sederhana)
             return redirect()->route('order.track', $order->id)
-                           ->with('success', 'Pesanan berhasil dibuat! Bayar tunai ke kurir saat sampai.');
+                           ->with('success', 'Pesanan berhasil dibuat! Siapkan uang tunai.');
         }
 
         return redirect()->route('order.payment', $order->id)
                        ->with('success', 'Pesanan dibuat. Silakan selesaikan pembayaran.');
     }
 
+    /**
+     * 3. Halaman Pembayaran
+     */
+    public function showPayment($id)
+    {
+        $order = Order::with('merchant')->findOrFail($id);
+
+        if ($order->payment_status === 'paid') {
+            return redirect()->route('order.track', $order->id);
+        }
+
+        return view('user.order.payment', compact('order'));
+    }
+
+    /**
+     * 4. Konfirmasi Pembayaran
+     */
+    public function confirmPayment(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+
+        if ($request->payment_code_input !== $order->payment_code) {
+            return back()->with('error', 'Kode pembayaran salah!');
+        }
+
+        $order->update(['payment_status' => 'paid']);
+
+        return redirect()->route('order.track', $order->id)
+                       ->with('success', 'Pembayaran berhasil dikonfirmasi!');
+    }
+
+    /**
+     * 5. Halaman Tracking (+ Logic Rating Modal)
+     */
+    public function trackOrder($id)
+    {
+        $order = Order::with(['merchant', 'driver', 'reviews'])->findOrFail($id);
+
+        $user = Auth::user();
+        if ($user && $user->id !== $order->customer_id && $user->id !== $order->merchant_id && $user->id !== $order->driver_id) {
+            return redirect('/')->with('error', 'Anda tidak memiliki akses.');
+        }
+
+        // Logic tampilkan Modal Rating
+        // Syarat: Status Completed DAN User ini belum memberi review di order ini
+        $showRatingModal = false;
+        if ($order->status == 'completed') {
+            $hasReviewed = $order->reviews->where('reviewer_id', $user->id)->count() > 0;
+            if (!$hasReviewed) {
+                $showRatingModal = true;
+            }
+        }
+
+        return view('user.order.track', compact('order', 'showRatingModal'));
+    }
+
+    /**
+     * 6. Submit Review (Rating)
+     */
+    public function submitReview(Request $request, $id)
+    {
+        $request->validate([
+            'merchant_rating' => 'required|integer|min:1|max:5',
+            'driver_rating' => 'required|integer|min:1|max:5',
+        ]);
+
+        $order = Order::findOrFail($id);
+        $user = Auth::user();
+
+        // Simpan Review Merchant
+        Review::create([
+            'order_id' => $order->id,
+            'reviewer_id' => $user->id,
+            'target_id' => $order->merchant_id,
+            'rating' => $request->merchant_rating,
+            'comment' => $request->merchant_comment
+        ]);
+
+        // Simpan Review Driver (Jika ada)
+        if ($order->driver_id) {
+            Review::create([
+                'order_id' => $order->id,
+                'reviewer_id' => $user->id,
+                'target_id' => $order->driver_id,
+                'rating' => $request->driver_rating,
+                'comment' => $request->driver_comment
+            ]);
+        }
+
+        return back()->with('success', 'Terima kasih atas penilaian Anda!');
+    }
+
+    /**
+     * 7. Update Status (Untuk Merchant)
+     */
     public function updateStatus(Request $request, $id)
     {
         $order = Order::findOrFail($id);
         
         if (Auth::user()->role == 'merchant' && $order->merchant_id != Auth::id()) {
-            abort(403, 'Unauthorized action.');
+            abort(403);
         }
 
         $order->status = $request->status;
@@ -144,62 +230,22 @@ class OrderController extends Controller
         return back()->with('success', 'Status pesanan diperbarui!');
     }
 
-    public function payment($id)
-    {
-        $order = Order::findOrFail($id);
-
-        if ($order->payment_status === 'paid') {
-            return redirect()->route('order.track', $order->id)
-                           ->with('success', 'Pembayaran sudah dikonfirmasi!');
-        }
-
-        return view('order.payment', compact('order'));
-    }
-
-    public function confirmPayment(Request $request, $id)
-    {
-        $order = Order::findOrFail($id);
-
-        $request->validate([
-            'payment_code_input' => 'required|string',
-        ]);
-
-        if ($request->payment_code_input !== $order->payment_code) {
-            return back()->with('error', 'Kode pembayaran salah! Periksa kembali.')
-                        ->withInput();
-        }
-
-        $order->update(['payment_status' => 'paid']);
-
-        return redirect()->route('order.track', $order->id)
-                       ->with('success', 'Pembayaran berhasil dikonfirmasi! 🎉');
-    }
-
-    public function track($id)
-    {
-        $order = Order::with(['merchant', 'driver'])->findOrFail($id);
-
-        $user = Auth::user();
-        if ($user->id !== $order->customer_id && $user->id !== $order->merchant_id && $user->id !== $order->driver_id) {
-            return redirect('/')->with('error', 'Anda tidak memiliki akses ke pesanan ini.');
-        }
-
-        return view('order.track', compact('order'));
-    }
-
+    /**
+     * 8. API Location Data
+     */
     public function getLocationData($id)
     {
         $order = Order::with(['driver', 'merchant'])->findOrFail($id);
 
         return response()->json([
             'order_id' => $order->id,
+            'status' => $order->status,
             'dest_latitude' => $order->dest_latitude,
             'dest_longitude' => $order->dest_longitude,
             'driver_latitude' => $order->driver?->latitude,
             'driver_longitude' => $order->driver?->longitude,
             'merchant_latitude' => $order->merchant?->latitude,
             'merchant_longitude' => $order->merchant?->longitude,
-            'status' => $order->status,
         ]);
     }
 }

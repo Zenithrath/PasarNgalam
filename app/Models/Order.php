@@ -37,4 +37,8 @@ class Order extends Model
     {
         return $this->belongsTo(User::class, 'customer_id');
     }
+    public function reviews()
+{
+    return $this->hasMany(Review::class);
+}
 }
