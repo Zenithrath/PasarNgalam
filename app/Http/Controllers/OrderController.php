@@ -87,12 +87,14 @@ class OrderController extends Controller
         }
 
         // Driver Assignment (Nearest < 50km)
+        // SQLite tidak mengizinkan HAVING tanpa GROUP BY, jadi gunakan whereRaw + selectRaw
+        $distanceExpr = "(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude))))";
         $assignedDriver = User::select("users.*")
-            ->selectRaw("(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) AS distance", [$lat, $lng, $lat])
+            ->selectRaw("$distanceExpr AS distance", [$lat, $lng, $lat])
             ->where('role', 'driver')
             ->where('is_online', true)
-            ->having('distance', '<', 50)
-            ->orderBy('distance', 'asc')
+            ->whereRaw("$distanceExpr < 50", [$lat, $lng, $lat])
+            ->orderByRaw("$distanceExpr ASC", [$lat, $lng, $lat])
             ->first();
 
         // Create Order
