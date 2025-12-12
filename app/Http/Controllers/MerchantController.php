@@ -66,6 +66,7 @@ class MerchantController extends Controller
             ->sum('total_price');
 
         $orderHistory = Order::where('merchant_id', $user->id)
+            ->where('status', 'completed')
             ->with(['customer', 'driver'])
             ->latest()
             ->limit(50)

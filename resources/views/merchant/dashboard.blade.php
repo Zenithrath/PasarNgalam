@@ -52,8 +52,9 @@
           audioPermission: false,
           notificationAudio: new Audio('https://cdn.freesound.org/previews/536/536108_11969242-lq.mp3'),
 
-          init() { 
-              console.log('🚀 Dashboard Ready'); 
+          init() {
+              console.log('🚀 Dashboard Ready');
+              this.startPolling(); // Start polling automatically
           },
 
           enableNotification() {
