@@ -9,9 +9,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     
-    <!-- LEAFLET MAPS (PENTING) - gunakan CDN jsDelivr agar lebih stabil di hosting -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-V2v1jL1rCsQVnDsMy7MmH9MuNoMNFc13JUO2y+h7J3s=" crossorigin="anonymous" />
-    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-Dov1AwlM1c01M9vrL1jAU6RzGmmKzBSSzvZAXPQTgGI=" crossorigin="anonymous"></script>
+    <!-- LEAFLET MAPS (PENTING) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
         tailwind.config = {
@@ -32,7 +32,7 @@
         .form-input:focus { outline: none; border-color: #00E073; box-shadow: 0 0 0 4px rgba(0, 224, 115, 0.1); background-color: rgba(30, 41, 59, 0.8); }
         [x-cloak] { display: none !important; }
         /* Map Style */
-        #map-register { height: 200px; width: 100%; border-radius: 0.75rem; z-index: 0; margin-top: 10px; border: 1px solid #475569; touch-action: pan-x pan-y; }
+        #map-register { height: 200px; width: 100%; border-radius: 0.75rem; z-index: 0; margin-top: 10px; border: 1px solid #475569; }
     </style>
 </head>
 <body class="bg-brand-dark text-white min-h-screen flex items-center justify-center p-4 relative overflow-hidden" 
@@ -71,7 +71,7 @@
             <!-- Tab Switcher -->
             <div class="flex p-1 bg-gray-800/50 rounded-xl mb-6 border border-white/5">
                 <button @click="tab = 'login'" class="flex-1 py-2.5 text-sm font-bold rounded-lg transition-all" :class="tab === 'login' ? 'bg-brand-green text-black shadow-lg' : 'text-gray-400 hover:text-white'">Masuk</button>
-                <button id="tab-register-btn" @click="tab = 'register'" class="flex-1 py-2.5 text-sm font-bold rounded-lg transition-all" :class="tab === 'register' ? 'bg-brand-green text-black shadow-lg' : 'text-gray-400 hover:text-white'">Daftar</button>
+                <button @click="tab = 'register'" class="flex-1 py-2.5 text-sm font-bold rounded-lg transition-all" :class="tab === 'register' ? 'bg-brand-green text-black shadow-lg' : 'text-gray-400 hover:text-white'">Daftar</button>
             </div>
 
             <!-- LOGIN FORM -->
@@ -150,13 +150,13 @@
 
     <!-- SCRIPT PETA -->
     <script>
-        let map;
-        function initMap() {
-            if (map || !document.getElementById('map-register')) return;
+        // Init Map (Only if element exists)
+        var map;
+        if (document.getElementById('map-register')) {
             map = L.map('map-register').setView([-7.9826, 112.6308], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
             
-            const marker = L.marker([-7.9826, 112.6308], {draggable: true}).addTo(map);
+            var marker = L.marker([-7.9826, 112.6308], {draggable: true}).addTo(map);
 
             function updateCoords(lat, lng) {
                 document.getElementById('reg_lat').value = lat;
@@ -167,39 +167,21 @@
             updateCoords(-7.9826, 112.6308);
 
             marker.on('dragend', function(e) {
-                const pos = marker.getLatLng();
+                var pos = marker.getLatLng();
                 updateCoords(pos.lat, pos.lng);
             });
 
-            // Get Current Location (non-blocking)
+            // Get Current Location
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(pos) {
-                    const lat = pos.coords.latitude;
-                    const lng = pos.coords.longitude;
+                    var lat = pos.coords.latitude;
+                    var lng = pos.coords.longitude;
                     map.setView([lat, lng], 16);
                     marker.setLatLng([lat, lng]);
                     updateCoords(lat, lng);
-                }, function(){}, { timeout: 5000 });
-            }
-        }
-
-        function triggerMapResize() {
-            if (map) {
-                setTimeout(() => { map.invalidateSize(); }, 150);
-            }
-        }
-
-        // Inisialisasi saat tab register dibuka atau tombol role merchant diklik
-        document.addEventListener('DOMContentLoaded', () => {
-            const tabRegisterBtn = document.getElementById('tab-register-btn');
-            if (tabRegisterBtn) {
-                tabRegisterBtn.addEventListener('click', () => {
-                    setTimeout(() => { initMap(); triggerMapResize(); }, 100);
                 });
             }
-            // Jika langsung mendarat di tab register (mis. via shared state), tetap inisiasi
-            setTimeout(() => { initMap(); triggerMapResize(); }, 300);
-        });
+        }
     </script>
 
 </body>
