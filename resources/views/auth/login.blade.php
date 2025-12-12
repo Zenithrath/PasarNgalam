@@ -32,7 +32,7 @@
         .form-input:focus { outline: none; border-color: #00E073; box-shadow: 0 0 0 4px rgba(0, 224, 115, 0.1); background-color: rgba(30, 41, 59, 0.8); }
         [x-cloak] { display: none !important; }
         /* Map Style */
-        #map-register { height: 200px; width: 100%; border-radius: 0.75rem; z-index: 0; margin-top: 10px; border: 1px solid #475569; }
+        #map-register { height: 200px; width: 100%; border-radius: 0.75rem; z-index: 0; margin-top: 10px; border: 1px solid #475569; touch-action: pan-x pan-y; }
     </style>
 </head>
 <body class="bg-brand-dark text-white min-h-screen flex items-center justify-center p-4 relative overflow-hidden" 
@@ -71,7 +71,7 @@
             <!-- Tab Switcher -->
             <div class="flex p-1 bg-gray-800/50 rounded-xl mb-6 border border-white/5">
                 <button @click="tab = 'login'" class="flex-1 py-2.5 text-sm font-bold rounded-lg transition-all" :class="tab === 'login' ? 'bg-brand-green text-black shadow-lg' : 'text-gray-400 hover:text-white'">Masuk</button>
-                <button @click="tab = 'register'" class="flex-1 py-2.5 text-sm font-bold rounded-lg transition-all" :class="tab === 'register' ? 'bg-brand-green text-black shadow-lg' : 'text-gray-400 hover:text-white'">Daftar</button>
+                <button id="tab-register-btn" @click="tab = 'register'" class="flex-1 py-2.5 text-sm font-bold rounded-lg transition-all" :class="tab === 'register' ? 'bg-brand-green text-black shadow-lg' : 'text-gray-400 hover:text-white'">Daftar</button>
             </div>
 
             <!-- LOGIN FORM -->
@@ -96,7 +96,7 @@
                     <h3 class="text-sm font-bold text-white mb-2">Daftar Sebagai:</h3>
                     <div class="flex gap-2 bg-gray-800/50 p-1.5 rounded-xl border border-white/5">
                         <button @click="role = 'user'" :class="role === 'user' ? 'bg-gray-700 text-brand-green border border-brand-green/30' : 'text-gray-400 hover:text-white'" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all">Pembeli</button>
-                        <button @click="role = 'merchant'; setTimeout(() => { if(document.getElementById('map-register')) map.invalidateSize(); }, 100);" :class="role === 'merchant' ? 'bg-gray-700 text-brand-green border border-brand-green/30' : 'text-gray-400 hover:text-white'" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all">Warung</button>
+                        <button id="btn-role-merchant" @click="role = 'merchant'; setTimeout(() => { if(document.getElementById('map-register')) map.invalidateSize(); }, 100);" :class="role === 'merchant' ? 'bg-gray-700 text-brand-green border border-brand-green/30' : 'text-gray-400 hover:text-white'" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all">Warung</button>
                         <button @click="role = 'driver'" :class="role === 'driver' ? 'bg-gray-700 text-brand-green border border-brand-green/30' : 'text-gray-400 hover:text-white'" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all">Driver</button>
                     </div>
                 </div>
@@ -150,13 +150,16 @@
 
     <!-- SCRIPT PETA -->
     <script>
-        // Init Map (Only if element exists)
-        var map;
-        if (document.getElementById('map-register')) {
+        let map;
+
+        function initMap() {
+            const container = document.getElementById('map-register');
+            if (!container || map) return;
+
             map = L.map('map-register').setView([-7.9826, 112.6308], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
             
-            var marker = L.marker([-7.9826, 112.6308], {draggable: true}).addTo(map);
+            const marker = L.marker([-7.9826, 112.6308], {draggable: true}).addTo(map);
 
             function updateCoords(lat, lng) {
                 document.getElementById('reg_lat').value = lat;
@@ -167,21 +170,46 @@
             updateCoords(-7.9826, 112.6308);
 
             marker.on('dragend', function(e) {
-                var pos = marker.getLatLng();
+                const pos = marker.getLatLng();
                 updateCoords(pos.lat, pos.lng);
             });
 
-            // Get Current Location
+            // Get Current Location (non-blocking)
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(pos) {
-                    var lat = pos.coords.latitude;
-                    var lng = pos.coords.longitude;
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
                     map.setView([lat, lng], 16);
                     marker.setLatLng([lat, lng]);
                     updateCoords(lat, lng);
-                });
+                }, function(){}, { timeout: 5000 });
             }
         }
+
+        function triggerMapResize() {
+            if (map) {
+                setTimeout(() => { map.invalidateSize(); }, 150);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Jika langsung mendarat di tab register, inisiasi map setelah render
+            setTimeout(() => { initMap(); triggerMapResize(); }, 300);
+
+            // Saat klik tab daftar
+            const tabRegisterBtn = document.getElementById('tab-register-btn');
+            if (tabRegisterBtn) {
+                tabRegisterBtn.addEventListener('click', () => {
+                    setTimeout(() => { initMap(); triggerMapResize(); }, 120);
+                });
+            }
+
+            // Saat pilih role merchant (peta hanya muncul di merchant)
+            const roleMerchantBtn = document.getElementById('btn-role-merchant');
+            roleMerchantBtn?.addEventListener('click', () => {
+                setTimeout(() => { initMap(); triggerMapResize(); }, 120);
+            });
+        });
     </script>
 
 </body>
