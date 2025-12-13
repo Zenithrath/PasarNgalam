@@ -18,6 +18,10 @@
                 <div>
                     <p class="text-[10px] text-blue-400 font-bold uppercase mb-1">Lokasi Jemput</p>
                     <h4 class="font-bold text-white text-lg leading-tight">{{ $activeOrder->merchant->store_name ?? 'Merchant' }}</h4>
+                    <div class="mt-1 flex items-center gap-2">
+                        <span class="text-yellow-400 text-xs font-bold">★ {{ $activeOrder->merchant->average_rating ?? '5.0' }}</span>
+                        <span class="text-gray-500 text-[10px]">({{ $activeOrder->merchant->total_reviews ?? 0 }} ulasan)</span>
+                    </div>
                     <p class="text-gray-400 text-sm mt-1 bg-gray-800/50 p-2 rounded-lg inline-block border border-gray-700">
                         📦 Total Belanja: <span class="text-white font-bold">Rp {{ number_format($activeOrder->total_price, 0, ',', '.') }}</span>
                     </p>

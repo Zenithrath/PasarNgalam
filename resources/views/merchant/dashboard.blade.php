@@ -195,7 +195,10 @@
 
         <!-- Right -->
         <div class="flex items-center gap-3">
-            <p class="text-sm font-bold hidden sm:block">{{ $user->store_name }}</p>
+            <div class="hidden sm:flex items-center gap-2">
+                <p class="text-sm font-bold">{{ $user->store_name }}</p>
+                <span class="text-[10px] bg-yellow-500/10 text-yellow-400 px-2 py-0.5 rounded border border-yellow-500/20">★ {{ $user->average_rating }} ({{ $user->total_reviews }} ulasan)</span>
+            </div>
 
             <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-brand-green">
                 @if($user->profile_picture)

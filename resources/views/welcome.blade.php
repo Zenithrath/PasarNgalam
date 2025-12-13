@@ -388,7 +388,8 @@
                     'lat' => $merchant->latitude, 
                     'lng' => $merchant->longitude, 
                     'category' => 'Aneka Kuliner',
-                    'rating' => '4.8',
+                    'rating' => $merchant->average_rating,
+                    'review_count' => $merchant->total_reviews,
                     'img' => $merchantImg, 
                     'menus' => $menusData
                 ];
@@ -416,6 +417,7 @@
                         
                         <div class="flex items-center gap-1 bg-yellow-500/10 px-1.5 py-0.5 rounded md:rounded-lg border border-yellow-500/20 shrink-0">
                             <span class="font-bold text-yellow-500 text-[10px] md:text-sm">★ {{ $merchantData['rating'] }}</span>
+                            <span class="text-[10px] text-gray-400">({{ $merchantData['review_count'] }} ulasan)</span>
                         </div>
                     </div>
                     

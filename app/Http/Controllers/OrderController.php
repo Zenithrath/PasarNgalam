@@ -87,23 +87,12 @@ class OrderController extends Controller
             }
         }
 
-        // Driver Assignment (Nearest < 50km)
-        // SQLite tidak mengizinkan HAVING tanpa GROUP BY, jadi gunakan whereRaw + selectRaw
-        $distanceExpr = "(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude))))";
-        $assignedDriver = User::select("users.*")
-            ->selectRaw("$distanceExpr AS distance", [$lat, $lng, $lat])
-            ->where('role', 'driver')
-            ->where('is_online', true)
-            ->whereRaw("$distanceExpr < 50", [$lat, $lng, $lat])
-            ->orderByRaw("$distanceExpr ASC", [$lat, $lng, $lat])
-            ->first();
-
         // Create Order
         $paymentCode = 'PAY' . strtoupper(uniqid());
         $order = Order::create([
             'customer_id' => Auth::id() ?? 1,
             'merchant_id' => $merchantId,
-            'driver_id'   => $assignedDriver ? $assignedDriver->id : null,
+            'driver_id'   => null,
             'delivery_address' => $request->delivery_address,
             'dest_latitude' => $lat,
             'dest_longitude' => $lng,
@@ -238,6 +227,26 @@ class OrderController extends Controller
 
         $order->status = $request->status;
         $order->save();
+        if ($request->status === 'ready' && !$order->driver_id) {
+            $merchant = User::find($order->merchant_id);
+            if ($merchant && $merchant->latitude && $merchant->longitude) {
+                $distanceExpr = "(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude))))";
+                $assignedDriver = User::select("users.*")
+                    ->selectRaw("$distanceExpr AS distance", [$merchant->latitude, $merchant->longitude, $merchant->latitude])
+                    ->where('role', 'driver')
+                    ->where('is_online', true)
+                    ->whereRaw("$distanceExpr < 50", [$merchant->latitude, $merchant->longitude, $merchant->latitude])
+                    ->orderByRaw("$distanceExpr ASC", [$merchant->latitude, $merchant->longitude, $merchant->latitude])
+                    ->first();
+                if ($assignedDriver) {
+                    $order->driver_id = $assignedDriver->id;
+                    $order->save();
+                    try {
+                        event(new OrderUpdated($order->id, $order->merchant_id, $order->driver_id, $order->status));
+                    } catch (\Exception $e) {}
+                }
+            }
+        }
         try {
             event(new OrderUpdated($order->id, $order->merchant_id, $order->driver_id, $order->status));
         } catch (\Exception $e) {}

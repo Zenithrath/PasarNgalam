@@ -37,6 +37,15 @@
             <h3 class="text-2xl font-bold text-white mt-1">Buka</h3>
             <p class="text-xs text-purple-400 mt-2">Siap menerima order</p>
         </div>
+        
+        <div class="bg-[#151F32] border border-white/5 p-6 rounded-2xl relative overflow-hidden group shadow-lg hover:border-yellow-500/30 transition md:col-span-3">
+            <div class="absolute right-0 top-0 w-24 h-24 bg-yellow-500/10 rounded-bl-full -mr-4 -mt-4"></div>
+            <p class="text-gray-400 text-sm uppercase font-medium">Rating Warung</p>
+            <div class="mt-1 flex items-center gap-3">
+                <span class="text-yellow-400 font-bold text-xl">★ {{ $user->average_rating }}</span>
+                <span class="text-gray-500 text-xs">({{ $user->total_reviews }} ulasan)</span>
+            </div>
+        </div>
     </div>
 
 
