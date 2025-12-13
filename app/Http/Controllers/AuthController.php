@@ -11,6 +11,14 @@ class AuthController extends Controller
 {
     public function showLoginForm()
     {
+        // Jika sudah login, redirect sesuai role
+        if (Auth::check()) {
+            $role = Auth::user()->role;
+            if ($role === 'merchant') return redirect('/merchant/dashboard');
+            if ($role === 'driver') return redirect('/driver/dashboard');
+            return redirect('/');
+        }
+        
         return view('auth.login');
     }
 
@@ -42,13 +50,23 @@ class AuthController extends Controller
 
             // Login manual untuk memastikan session terbentuk
             Auth::login($user, $request->filled('remember'));
+            
+            // Regenerate session untuk keamanan
             $request->session()->regenerate();
+            
+            // Simpan session secara eksplisit
+            $request->session()->save();
 
-            $role = Auth::user()->role;
-            if ($role === 'merchant') return redirect()->intended('/merchant/dashboard');
-            if ($role === 'driver') return redirect()->intended('/driver/dashboard');
+            // Redirect langsung tanpa intended() untuk menghindari loop
+            $role = $user->role;
+            if ($role === 'merchant') {
+                return redirect('/merchant/dashboard')->with('success', 'Selamat datang!');
+            }
+            if ($role === 'driver') {
+                return redirect('/driver/dashboard')->with('success', 'Selamat datang!');
+            }
 
-            return redirect()->intended('/');
+            return redirect('/')->with('success', 'Selamat datang!');
         } catch (\Exception $e) {
             \Log::error('Login error: ' . $e->getMessage());
             return back()
