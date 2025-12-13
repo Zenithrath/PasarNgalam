@@ -133,7 +133,7 @@
             </div>
 
             <!-- VERIFICATION FORM -->
-            <form action="{{ route('order.confirmPayment', $order->id) }}" method="POST" class="bg-[#0B1120] rounded-2xl p-6 border border-[#334155]">
+            <form action="{{ route('order.payment.confirm', $order->id) }}" method="POST" class="bg-[#0B1120] rounded-2xl p-6 border border-[#334155]">
                 @csrf
 
                 <h3 class="text-brand-green font-bold text-sm uppercase mb-4">Konfirmasi Pembayaran</h3>
