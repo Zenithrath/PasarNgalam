@@ -227,4 +227,23 @@ class DriverController extends Controller
 
         return back()->with('success', 'Selamat mengantar! Hati-hati di jalan.');
     }
+    
+    /**
+     * API: Cek order aktif untuk driver
+     */
+    public function getActiveOrder()
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== 'driver') {
+            return response()->json(['has_active' => false]);
+        }
+        $active = Order::where('driver_id', $user->id)
+            ->whereIn('status', ['pending', 'cooking', 'ready', 'delivery'])
+            ->select(['id', 'status'])
+            ->first();
+        return response()->json([
+            'has_active' => (bool) $active,
+            'order' => $active
+        ]);
+    }
 }

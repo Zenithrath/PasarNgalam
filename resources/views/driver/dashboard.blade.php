@@ -50,6 +50,7 @@
           currentTab: 'dashboard', // dashboard, history, earnings
           showProfileModal: false,
           isOnline: @json((bool) $user->is_online), 
+          hasActiveOrder: @json((bool) $activeOrder),
           EchoInstance: null,
           startRealtime() {
               try {
@@ -140,6 +141,26 @@
             }
         }
         setInterval(updateDriverLocation, 10000);
+        
+        function pollActiveOrder() {
+            fetch('{{ route('driver.active') }}', {
+                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                const root = document.querySelector('[x-data]');
+                if (!root || !root.__x) return;
+                const state = root.__x.$data;
+                if (data.has_active && !state.hasActiveOrder) {
+                    window.location.reload();
+                }
+                if (data.has_active && state.hasActiveOrder) {
+                    // optional: compare status and reload if changed
+                    window.location.reload();
+                }
+            }).catch(()=>{});
+        }
+        setInterval(pollActiveOrder, 5000);
         document.addEventListener('DOMContentLoaded', function() {
             const root = document.querySelector('[x-data]');
             if (root && root.__x) {

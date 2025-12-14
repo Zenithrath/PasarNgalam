@@ -90,6 +90,9 @@ Route::middleware(['auth'])->group(function () {
     // Order Action (Selesaikan)
     Route::post('/driver/order/{id}/complete', [DriverController::class, 'completeOrder'])->name('driver.order.complete'); 
     Route::post('/driver/order/{id}/accept', [DriverController::class, 'acceptOrder'])->name('driver.order.accept'); 
+    
+    // API: Cek order aktif untuk driver
+    Route::get('/driver/active-order', [DriverController::class, 'getActiveOrder'])->name('driver.active');
 });
 
 
@@ -97,6 +100,9 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+
+    // API untuk auto update Tracking User
+    Route::get('/api/order/{id}/location', [OrderController::class, 'getLocationData'])->name('order.location');
 });
 
 // Fallback untuk melayani file di disk 'public' tanpa symlink di hosting
