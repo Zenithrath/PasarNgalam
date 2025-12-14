@@ -236,7 +236,7 @@ class OrderController extends Controller
                     ->where('role', 'driver')
                     ->where('is_online', true)
                     ->whereRaw("$distanceExpr < 50", [$merchant->latitude, $merchant->longitude, $merchant->latitude])
-                    ->orderByRaw("$distanceExpr ASC", [$merchant->latitude, $merchant->longitude, $merchant->latitude])
+                    ->orderBy('distance', 'ASC')
                     ->first();
                 if ($assignedDriver) {
                     $order->driver_id = $assignedDriver->id;

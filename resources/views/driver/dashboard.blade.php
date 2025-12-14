@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/pusher-js@8.4.0/dist/web/pusher.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.0/dist/echo.iife.js"></script>
     
     <script>
         tailwind.config = {
@@ -48,7 +50,26 @@
           currentTab: 'dashboard', // dashboard, history, earnings
           showProfileModal: false,
           isOnline: @json((bool) $user->is_online), 
-
+          EchoInstance: null,
+          startRealtime() {
+              try {
+                  this.EchoInstance = new Echo({
+                      broadcaster: 'reverb',
+                      key: '{{ env('REVERB_APP_KEY') }}',
+                      wsHost: '{{ env('REVERB_HOST', request()->getHost()) }}',
+                      wsPort: {{ env('REVERB_PORT', 443) }},
+                      wssPort: {{ env('REVERB_PORT', 443) }},
+                      forceTLS: true,
+                      enabledTransports: ['ws', 'wss'],
+                  });
+                  this.EchoInstance.channel('driver.{{ $user->id }}')
+                      .listen('.order.updated', () => {
+                          window.location.reload();
+                      });
+              } catch (e) {
+                  // ignore
+              }
+          },
           toggleStatus() {
               this.isOnline = !this.isOnline;
               fetch('{{ route('driver.toggle') }}', {
@@ -119,6 +140,12 @@
             }
         }
         setInterval(updateDriverLocation, 10000);
+        document.addEventListener('DOMContentLoaded', function() {
+            const root = document.querySelector('[x-data]');
+            if (root && root.__x) {
+                root.__x.$data.startRealtime();
+            }
+        });
 
         function previewDriverProfile(input) {
             if (input.files && input.files[0]) {

@@ -195,6 +195,10 @@
 
         <!-- Right -->
         <div class="flex items-center gap-3">
+            <button x-show="!audioPermission" @click="enableNotification()" 
+                    class="hidden sm:inline-flex items-center gap-2 bg-[#00E073] text-black font-bold px-3 py-2 rounded-lg shadow-[0_0_12px_rgba(0,224,115,0.4)] hover:bg-[#00C062] transition">
+                🔔 Aktifkan Notifikasi
+            </button>
             <div class="hidden sm:flex items-center gap-2">
                 <p class="text-sm font-bold">{{ $user->store_name }}</p>
                 <span class="text-[10px] bg-yellow-500/10 text-yellow-400 px-2 py-0.5 rounded border border-yellow-500/20">★ {{ $user->average_rating }} ({{ $user->total_reviews }} ulasan)</span>
