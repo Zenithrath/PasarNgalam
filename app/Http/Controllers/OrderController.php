@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product; // Security fix: Import Product for price verification
 use App\Models\Order;
 use App\Models\User;
 use App\Models\Review; // Pastikan Model Review di-import
@@ -56,6 +57,25 @@ class OrderController extends Controller
 
         $cart = json_decode($request->cart_data, true);
 
+        // --- SECURITY FIX: Calculate Total Price Server-Side ---
+        $calculatedTotal = 0;
+        foreach ($cart as $item) {
+            $product = Product::find($item['id']);
+            if ($product) {
+                // Gunakan harga dari database, jangan dari request
+                $calculatedTotal += $product->price * $item['quantity'];
+                
+                // Tambahan: Cek addons jika ada (opsional, tergantung implementasi)
+                // Disini kita asumsikan harga dasar dulu untuk keamanan minimal
+            }
+        }
+        
+        // Validasi: Jika cart kosong atau perhitungan 0 (mencurigakan), reject
+        if ($calculatedTotal <= 0) {
+             return back()->with('error', 'Keranjang belanja tidak valid.');
+        }
+        // -------------------------------------------------------
+
         // Merchant Logic
         if (isset($cart[0]['merchant_id'])) {
             $merchantId = $cart[0]['merchant_id'];
@@ -90,13 +110,13 @@ class OrderController extends Controller
         // Create Order
         $paymentCode = 'PAY' . strtoupper(uniqid());
         $order = Order::create([
-            'customer_id' => Auth::id() ?? 1,
+            'customer_id' => Auth::id(), // Pastikan pakai ID Auth
             'merchant_id' => $merchantId,
             'driver_id'   => null,
             'delivery_address' => $request->delivery_address,
             'dest_latitude' => $lat,
             'dest_longitude' => $lng,
-            'total_price' => $request->total_amount,
+            'total_price' => $calculatedTotal, // Fix: Gunakan hasil hitungan server
             'delivery_fee' => $deliveryFee,
             'status' => 'pending',
             'payment_method' => $request->payment_method,
@@ -191,7 +211,11 @@ class OrderController extends Controller
         $order = Order::findOrFail($id);
         $user = Auth::user();
 
-        // Simpan Review Merchant
+        // Security Fix: IDOR Protection
+        // Hanya customer pemilik order yang boleh review
+        if ($order->customer_id !== $user->id) {
+            abort(403, 'Unauthorized action.');
+        }
         Review::create([
             'order_id' => $order->id,
             'reviewer_id' => $user->id,
@@ -221,8 +245,10 @@ class OrderController extends Controller
     {
         $order = Order::findOrFail($id);
         
-        if (Auth::user()->role == 'merchant' && $order->merchant_id != Auth::id()) {
-            abort(403);
+        // Security Fix: Strict Access Control
+        // Hanya merchant yang memiliki order ini yang boleh update status
+        if (Auth::user()->role !== 'merchant' || $order->merchant_id !== Auth::id()) {
+            abort(403, 'Unauthorized access.');
         }
 
         $order->status = $request->status;

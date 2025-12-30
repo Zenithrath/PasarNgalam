@@ -106,6 +106,9 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Fallback untuk melayani file di disk 'public' tanpa symlink di hosting
+// Fallback untuk melayani file di disk 'public' tanpa symlink di hosting
+// DISABLED FOR SECURITY: This route allows directory traversal. Use 'php artisan storage:link' instead.
+/*
 Route::get('/storage/{path}', function ($path) {
     if (!Storage::disk('public')->exists($path)) {
         abort(404);
@@ -114,3 +117,4 @@ Route::get('/storage/{path}', function ($path) {
     $mime = function_exists('mime_content_type') ? mime_content_type($absolutePath) : 'application/octet-stream';
     return response()->file($absolutePath, ['Content-Type' => $mime]);
 })->where('path', '.*');
+*/
