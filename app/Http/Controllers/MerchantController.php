@@ -132,7 +132,7 @@ class MerchantController extends Controller
             'merchant_id' => Auth::id(),
             'name' => $request->name,
             'price' => $request->price,
-            'description' => $request->description,
+            'description' => strip_tags($request->description), // Security: Sanitize Input
             'image' => $imagePath,
             'category' => $request->category ?? 'Makanan Berat',
             'addons' => json_decode($request->addons, true) ?? [],
@@ -156,7 +156,7 @@ class MerchantController extends Controller
         $product->fill([
             'name' => $request->name,
             'price' => $request->price,
-            'description' => $request->description,
+            'description' => strip_tags($request->description), // Security: Sanitize Input
             'category' => $request->category,
             'addons' => json_decode($request->addons, true) ?? [],
             'is_available' => $request->has('is_available'),

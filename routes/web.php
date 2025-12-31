@@ -24,8 +24,8 @@ Route::get('/', function () {
 
 // --- AUTHENTICATION ---
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [AuthController::class, 'login'])->name('login.process');
-Route::post('/register', [AuthController::class, 'register'])->name('register.process');
+Route::post('/login', [AuthController::class, 'login'])->middleware(['throttle:6,1'])->name('login.process');
+Route::post('/register', [AuthController::class, 'register'])->middleware(['throttle:6,1'])->name('register.process');
 Route::get('/register', [AuthController::class, 'showLoginForm'])->name('register.view'); // GET hanya untuk tampilkan form
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 

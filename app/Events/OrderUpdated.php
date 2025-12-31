@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\PrivateChannel; // Use PrivateChannel
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -28,12 +29,12 @@ class OrderUpdated implements ShouldBroadcast
     public function broadcastOn(): array
     {
         $channels = [
-            new Channel('order.' . $this->orderId),
-            new Channel('merchant.' . $this->merchantId),
+            new PrivateChannel('order.' . $this->orderId), // Private
+            new PrivateChannel('merchant.' . $this->merchantId), // Private
         ];
 
         if ($this->driverId) {
-            $channels[] = new Channel('driver.' . $this->driverId);
+            $channels[] = new PrivateChannel('driver.' . $this->driverId); // Private
         }
 
         return $channels;

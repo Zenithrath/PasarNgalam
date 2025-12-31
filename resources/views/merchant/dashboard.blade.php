@@ -116,7 +116,7 @@
                       forceTLS: true,
                       enabledTransports: ['ws', 'wss'],
                   });
-                  this.EchoInstance.channel('merchant.{{ $user->id }}')
+                  this.EchoInstance.private('merchant.{{ $user->id }}')
                       .listen('.order.updated', () => {
                           this.fetchOrders();
                       });

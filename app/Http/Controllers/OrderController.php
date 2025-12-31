@@ -216,12 +216,13 @@ class OrderController extends Controller
         if ($order->customer_id !== $user->id) {
             abort(403, 'Unauthorized action.');
         }
+        // Simpan Review Merchant
         Review::create([
             'order_id' => $order->id,
             'reviewer_id' => $user->id,
             'target_id' => $order->merchant_id,
             'rating' => $request->merchant_rating,
-            'comment' => $request->merchant_comment
+            'comment' => strip_tags($request->merchant_comment) // Security: Sanitize Input
         ]);
 
         // Simpan Review Driver (Jika ada)
@@ -231,7 +232,7 @@ class OrderController extends Controller
                 'reviewer_id' => $user->id,
                 'target_id' => $order->driver_id,
                 'rating' => $request->driver_rating,
-                'comment' => $request->driver_comment
+                'comment' => strip_tags($request->driver_comment) // Security: Sanitize Input
             ]);
         }
 

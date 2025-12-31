@@ -72,7 +72,7 @@ class ProfileController extends Controller
         $user->name = $request->name;
         $user->email = $request->email;
         $user->phone = $request->phone;
-        $user->address = $request->address;
+        $user->address = strip_tags($request->address); // Security: Sanitize Input
 
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
